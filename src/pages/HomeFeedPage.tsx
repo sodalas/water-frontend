@@ -37,6 +37,7 @@ export function HomeFeedPage() {
         adapter={adapter}
         onItemPress={handleItemPress}
         onAuthorPress={handleAuthorPress}
+        viewerId="demo-user"
       />
     </main>
   );

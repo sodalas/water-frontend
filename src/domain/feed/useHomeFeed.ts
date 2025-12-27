@@ -1,27 +1,25 @@
 // src/domain/feed/useHomeFeed.ts
-import { useState, useCallback, useEffect } from "react";
-import { HomeFeedAdapter, type FeedSnapshot } from "./HomeFeedAdapter";
+import { useState, useEffect, useCallback } from "react";
+import type { HomeFeedAdapter, FeedSnapshot } from "./HomeFeedAdapter";
 
-export function useHomeFeed(_adapter: HomeFeedAdapter, viewerId: string) {
-  const [snapshot, setSnapshot] = useState<FeedSnapshot>(
-    HomeFeedAdapter.idle()
-  );
+export function useHomeFeed(adapter: HomeFeedAdapter, viewerId: string) {
+  const [snapshot, setSnapshot] = useState<FeedSnapshot>(adapter.getSnapshot());
 
   // Reset to idle if viewer changes (Safety)
   useEffect(() => {
-    setSnapshot(HomeFeedAdapter.idle());
-  }, [viewerId]);
+    setSnapshot(adapter.idle());
+  }, [adapter, viewerId]);
 
   const load = useCallback(async () => {
     if (!viewerId) return;
 
     // Explicit Transition: Loading
-    setSnapshot(HomeFeedAdapter.loading());
+    setSnapshot(adapter.loading());
 
-    // Explicit Transition: Fetch Result
-    const result = await HomeFeedAdapter.fetch(viewerId);
+    // Delegate transitions to adapter
+    const result = await adapter.fetch(viewerId);
     setSnapshot(result);
-  }, [viewerId]);
+  }, [adapter, viewerId]);
 
   return {
     ...snapshot, // Expose flattened state (status, data, error)

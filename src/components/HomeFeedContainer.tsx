@@ -2,18 +2,19 @@
 import React from "react";
 import { useHomeFeed } from "../domain/feed/useHomeFeed";
 import { HomeFeedList } from "./HomeFeedList";
-import { FeedSkeletonList } from "@/components/feed/FeedSkeletonList";
-import { FeedErrorState } from "@/components/feed/FeedErrorState";
+import { FeedSkeletonList } from "./feed/FeedSkeletonList";
+import { FeedErrorState } from "./feed/FeedErrorState";
 import type { HomeFeedAdapter } from "../domain/feed/HomeFeedAdapter";
 
 type HomeFeedContainerProps = {
   adapter: HomeFeedAdapter;
+  viewerId: string;
   onItemPress?: (assertionId: string) => void;
   onAuthorPress?: (authorId: string) => void;
 };
 
 export function HomeFeedContainer(props: HomeFeedContainerProps) {
-  const { adapter, onItemPress, onAuthorPress } = props;
+  const { adapter, viewerId, onItemPress, onAuthorPress } = props;
 
   const state = useHomeFeed(adapter, viewerId);
 
@@ -30,7 +31,14 @@ export function HomeFeedContainer(props: HomeFeedContainerProps) {
       return <FeedSkeletonList />;
 
     case "error":
-      return <FeedErrorState onRetry={state.refresh} />;
+      return (
+        <FeedErrorState
+          onRetry={() => adapter.refresh()}
+          // optional: title/message if you want
+          // title="Couldn't load feed"
+          // message="Please try again."
+        />
+      );
 
     case "ready":
       return (

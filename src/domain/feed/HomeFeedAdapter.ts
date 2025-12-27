@@ -26,69 +26,46 @@ export interface FeedSnapshot {
  */
 
 export class HomeFeedAdapter {
+  private snapshot: FeedSnapshot = this.idle();
+
   idle(): FeedSnapshot {
     return { status: "idle", data: null, error: null };
   }
+
   loading(): FeedSnapshot {
     return { status: "loading", data: null, error: null };
   }
+
+  getSnapshot(): FeedSnapshot {
+    return this.snapshot;
+  }
+
   async fetch(viewerId: string): Promise<FeedSnapshot> {
+    this.snapshot = this.loading();
+
     try {
-      // Mock Network Call
-      // In a real implementation, this would use fetch() to the backend projection API.
-      // It is isolated here so the Hook doesn't know about 'fetch' or 'axios'.
       console.debug(`[HomeFeedAdapter] Fetching for ${viewerId}`);
 
-      const mockData: FeedItem[] = []; // Empty for now
+      const mockData: FeedItem[] = [];
 
-      return {
+      this.snapshot = {
         status: "ready",
         data: mockData,
         error: null,
       };
     } catch (error) {
-      return {
+      this.snapshot = {
         status: "error",
         data: null,
         error:
           error instanceof Error ? error : new Error("Unknown Adapter Error"),
       };
     }
+
+    return this.snapshot;
+  }
+
+  async refresh(viewerId: string) {
+    return this.fetch(viewerId);
   }
 }
-
-// export const HomeFeedAdapter = {
-//   // Factory for Idle State
-//   idle(): FeedSnapshot {
-//     return { status: 'idle', data: null, error: null };
-//   },
-
-//   // Factory for Loading State (replaces snapshot)
-//   loading(): FeedSnapshot {
-//     return { status: 'loading', data: null, error: null };
-//   },
-
-//   // Fetch Logic (Authoritative Source)
-//   async fetch(viewerId: string): Promise<FeedSnapshot> {
-//     try {
-//       // Mock Network Call
-//       // In a real implementation, this would use fetch() to the backend projection API.
-//       // It is isolated here so the Hook doesn't know about 'fetch' or 'axios'.
-//       console.debug(`[HomeFeedAdapter] Fetching for ${viewerId}`);
-
-//       const mockData: FeedItem[] = []; // Empty for now
-
-//       return {
-//         status: 'ready',
-//         data: mockData,
-//         error: null
-//       };
-//     } catch (error) {
-//        return {
-//          status: 'error',
-//          data: null,
-//          error: error instanceof Error ? error : new Error('Unknown Adapter Error')
-//        };
-//     }
-//   }
-// };
