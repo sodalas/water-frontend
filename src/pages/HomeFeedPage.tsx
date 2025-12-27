@@ -3,21 +3,25 @@ import { useEffect, useMemo } from "react";
 import { HomeFeedAdapter } from "../domain/feed/HomeFeedAdapter";
 import { HomeFeedContainer } from "../components/HomeFeedContainer.tsx";
 import { useHomeFeed } from "../domain/feed/useHomeFeed";
+import { authClient } from "../lib/auth-client";
 
 export function HomeFeedPage() {
-  const viewerId = "demo-user";
+  const { data: session } = authClient.useSession();
+  const viewerId = session?.user.id ?? null;
 
   // Adapter is created once per page lifecycle
   const adapter = useMemo(() => {
     return new HomeFeedAdapter();
   }, []);
 
-  const { status, items, error, load, refresh } = useHomeFeed(adapter, viewerId);
+  const { status, items, error, load, refresh } = useHomeFeed(adapter, viewerId || ""); 
+  // Hook expects string. Logic: if !viewerId, hook returns idle.
+  // Wait, hook takes string. passing "" if null is safe for my hook logic (if (!viewerId) return).
 
   // Initial Load
   useEffect(() => {
-    load();
-  }, [load]);
+    if (viewerId) load();
+  }, [load, viewerId]);
 
   const handleRefresh = () => {
     refresh();
