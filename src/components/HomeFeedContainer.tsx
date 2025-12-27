@@ -1,15 +1,17 @@
 // HomeFeedContainer.tsx
-import React from "react";
-import { useHomeFeed } from "../domain/feed/useHomeFeed";
 import { HomeFeedList } from "./HomeFeedList";
 import { FeedSkeletonList } from "./feed/FeedSkeletonList";
 import { FeedErrorState } from "./feed/FeedErrorState";
-import type { FeedItem, HomeFeedAdapter } from "../domain/feed/HomeFeedAdapter";
+import type { FeedItem } from "../domain/feed/HomeFeedAdapter";
 import type { FeedItemView } from "./feed/types";
 
+type FeedStatus = "idle" | "loading" | "ready" | "error";
+
 type HomeFeedContainerProps = {
-  adapter: HomeFeedAdapter;
-  viewerId: string;
+  status: FeedStatus;
+  items: FeedItem[];
+  error: Error | null;
+  onRetry: () => void;
   onItemPress?: (assertionId: string) => void;
   onAuthorPress?: (authorId: string) => void;
 };
@@ -17,7 +19,7 @@ type HomeFeedContainerProps = {
 function toFeedItemView(item: FeedItem): FeedItemView {
   return {
     assertionId: item.assertionId,
-    authorName: "Unknown", // placeholder for now
+    authorName: "Unknown",
     authorHandle: "unknown",
     createdAt: item.createdAt,
     text: item.text,
@@ -26,13 +28,10 @@ function toFeedItemView(item: FeedItem): FeedItemView {
 }
 
 export function HomeFeedContainer(props: HomeFeedContainerProps) {
-  const { adapter, viewerId } = props;
+  const { status, items, onRetry, onItemPress, onAuthorPress } = props;
 
-  const state = useHomeFeed(adapter, viewerId);
-
-  switch (state.status) {
+  switch (status) {
     case "idle":
-      // Explicit idle — no inference, no auto-fetch
       return (
         <section aria-label="Home feed (idle)">
           <p>Feed not loaded.</p>
@@ -45,24 +44,20 @@ export function HomeFeedContainer(props: HomeFeedContainerProps) {
     case "error":
       return (
         <FeedErrorState
-          onRetry={() => adapter.refresh("demo-user")}
-          // optional: title/message if you want
-          // title="Couldn't load feed"
-          // message="Please try again."
+          onRetry={onRetry}
         />
       );
 
     case "ready":
       return (
         <HomeFeedList
-          items={state.items.map(toFeedItemView)}
-          // onItemPress={onItemPress}
-          // onAuthorPress={onAuthorPress}
+          items={items.map(toFeedItemView)}
+          onItemPress={onItemPress}
+          onAuthorPress={onAuthorPress}
         />
       );
 
     default:
-      // Exhaustiveness guard — illegal states must be impossible
       return null;
   }
 }

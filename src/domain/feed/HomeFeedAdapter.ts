@@ -46,11 +46,18 @@ export class HomeFeedAdapter {
     try {
       console.debug(`[HomeFeedAdapter] Fetching for ${viewerId}`);
 
-      const mockData: FeedItem[] = [];
+      const response = await fetch('/api/home', {
+        credentials: 'include',
+        headers: { 'Content-Type': 'application/json' }
+      });
+
+      if (!response.ok) throw new Error('Failed to fetch home feed');
+
+      const data: FeedItem[] = await response.json();
 
       this.snapshot = {
         status: "ready",
-        data: mockData,
+        data,
         error: null,
       };
     } catch (error) {

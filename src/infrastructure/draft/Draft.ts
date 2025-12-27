@@ -1,4 +1,4 @@
-import { ComposerDraft, DraftStore } from '../../domain/composer/DraftStore';
+import type { ComposerDraft, DraftStore } from '../../domain/composer/DraftStore';
 
 // Transport Envelope (Private to Infrastructure)
 interface DraftEnvelope {
@@ -15,6 +15,7 @@ export const Draft: DraftStore = {
     try {
       const response = await fetch('/api/composer', {
         method: 'GET',
+        credentials: 'include',
         headers: {
             'Content-Type': 'application/json',
         }
@@ -44,6 +45,7 @@ export const Draft: DraftStore = {
     try {
         const response = await fetch('/api/composer', {
             method: 'PUT',
+            credentials: 'include',
             headers: {
                 'Content-Type': 'application/json'
             },
@@ -60,7 +62,7 @@ export const Draft: DraftStore = {
   async clear(viewerId: string): Promise<void> {
     if (!viewerId) return;
     try {
-        await fetch('/api/composer', { method: 'DELETE' });
+      await fetch('/api/composer', { method: 'DELETE', credentials: 'include' });
     } catch (e) {
         console.error('Draft Clear Error:', e);
     }

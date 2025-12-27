@@ -1,25 +1,29 @@
 // HomeFeedPage.tsx
-import React, { useEffect, useMemo } from "react";
+import { useEffect, useMemo } from "react";
 import { HomeFeedAdapter } from "../domain/feed/HomeFeedAdapter";
 import { HomeFeedContainer } from "../components/HomeFeedContainer.tsx";
+import { useHomeFeed } from "../domain/feed/useHomeFeed";
 
 export function HomeFeedPage() {
+  const viewerId = "demo-user";
+
   // Adapter is created once per page lifecycle
   const adapter = useMemo(() => {
     return new HomeFeedAdapter();
   }, []);
 
-  // Explicit lifecycle ownership
+  const { status, items, error, load, refresh } = useHomeFeed(adapter, viewerId);
+
+  // Initial Load
   useEffect(() => {
-    adapter.fetch("demo-user");
-  }, [adapter]);
+    load();
+  }, [load]);
 
   const handleRefresh = () => {
-    adapter.refresh("demo-user");
+    refresh();
   };
 
   const handleItemPress = (assertionId: string) => {
-    // Navigation logic belongs here (or higher)
     console.log("Navigate to assertion:", assertionId);
   };
 
@@ -34,10 +38,12 @@ export function HomeFeedPage() {
       </button>
 
       <HomeFeedContainer
-        adapter={adapter}
+        status={status}
+        items={items}
+        error={error}
+        onRetry={refresh}
         onItemPress={handleItemPress}
         onAuthorPress={handleAuthorPress}
-        viewerId="demo-user"
       />
     </main>
   );
