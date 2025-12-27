@@ -1,6 +1,6 @@
 // src/domain/feed/HomeFeedAdapter.ts
 
-export type FeedStatus = 'idle' | 'loading' | 'ready' | 'error';
+export type FeedStatus = "idle" | "loading" | "ready" | "error";
 
 export interface FeedItem {
   assertionId: string;
@@ -22,39 +22,73 @@ export interface FeedSnapshot {
 /**
  * Platform-Agnostic Adapter for the Home Feed.
  * Encapsulates state definitions, transition logic, and data fetching.
+ *
  */
-export const HomeFeedAdapter = {
-  // Factory for Idle State
+
+export class HomeFeedAdapter {
   idle(): FeedSnapshot {
-    return { status: 'idle', data: null, error: null };
-  },
-
-  // Factory for Loading State (replaces snapshot)
+    return { status: "idle", data: null, error: null };
+  }
   loading(): FeedSnapshot {
-    return { status: 'loading', data: null, error: null };
-  },
-
-  // Fetch Logic (Authoritative Source)
+    return { status: "loading", data: null, error: null };
+  }
   async fetch(viewerId: string): Promise<FeedSnapshot> {
     try {
       // Mock Network Call
       // In a real implementation, this would use fetch() to the backend projection API.
       // It is isolated here so the Hook doesn't know about 'fetch' or 'axios'.
       console.debug(`[HomeFeedAdapter] Fetching for ${viewerId}`);
-      
+
       const mockData: FeedItem[] = []; // Empty for now
 
       return {
-        status: 'ready',
+        status: "ready",
         data: mockData,
-        error: null
+        error: null,
       };
     } catch (error) {
-       return {
-         status: 'error',
-         data: null,
-         error: error instanceof Error ? error : new Error('Unknown Adapter Error')
-       };
+      return {
+        status: "error",
+        data: null,
+        error:
+          error instanceof Error ? error : new Error("Unknown Adapter Error"),
+      };
     }
   }
-};
+}
+
+// export const HomeFeedAdapter = {
+//   // Factory for Idle State
+//   idle(): FeedSnapshot {
+//     return { status: 'idle', data: null, error: null };
+//   },
+
+//   // Factory for Loading State (replaces snapshot)
+//   loading(): FeedSnapshot {
+//     return { status: 'loading', data: null, error: null };
+//   },
+
+//   // Fetch Logic (Authoritative Source)
+//   async fetch(viewerId: string): Promise<FeedSnapshot> {
+//     try {
+//       // Mock Network Call
+//       // In a real implementation, this would use fetch() to the backend projection API.
+//       // It is isolated here so the Hook doesn't know about 'fetch' or 'axios'.
+//       console.debug(`[HomeFeedAdapter] Fetching for ${viewerId}`);
+
+//       const mockData: FeedItem[] = []; // Empty for now
+
+//       return {
+//         status: 'ready',
+//         data: mockData,
+//         error: null
+//       };
+//     } catch (error) {
+//        return {
+//          status: 'error',
+//          data: null,
+//          error: error instanceof Error ? error : new Error('Unknown Adapter Error')
+//        };
+//     }
+//   }
+// };

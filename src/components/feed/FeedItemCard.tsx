@@ -1,20 +1,7 @@
-export interface FeedItem {
-  assertionId: string;
-  authorName: string;
-  authorHandle: string;
-  avatarUrl?: string;
-  createdAt: string;
-  text: string;
-  media?: {
-    type: "image" | "video" | "link";
-    src: string;
-    preview?: string;
-    title?: string;
-    domain?: string;
-  }[];
-}
+// FeedItemCard now uses FeedItemView
+import type { FeedItemView } from "./types";
 
-export function FeedItemCard({ item }: { item: FeedItem }) {
+export function FeedItemCard({ item }: { item: FeedItemView }) {
   return (
     <article
       className="

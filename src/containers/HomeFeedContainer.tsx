@@ -15,7 +15,7 @@ type HomeFeedContainerProps = {
 export function HomeFeedContainer(props: HomeFeedContainerProps) {
   const { adapter, onItemPress, onAuthorPress } = props;
 
-  const state = useHomeFeed(adapter);
+  const state = useHomeFeed(adapter, viewerId);
 
   switch (state.status) {
     case "idle":
@@ -30,7 +30,7 @@ export function HomeFeedContainer(props: HomeFeedContainerProps) {
       return <FeedSkeletonList />;
 
     case "error":
-      return <HomeFeedList items={state.items} />;
+      return <FeedErrorState onRetry={state.refresh} />;
 
     case "ready":
       return (

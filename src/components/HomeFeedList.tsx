@@ -1,25 +1,11 @@
 // HomeFeedList.tsx
+// HomeFeedList uses FeedItemView
 import React from "react";
 import { FeedItemCard } from "./FeedItemCard.tsx";
-
-export interface FeedItem {
-  assertionId: string;
-  authorName: string;
-  authorHandle: string;
-  avatarUrl?: string;
-  createdAt: string;
-  text: string;
-  media?: {
-    type: "image" | "video" | "link";
-    src: string;
-    preview?: string;
-    title?: string;
-    domain?: string;
-  }[];
-}
+import type { FeedItemView } from "./feed/types.ts";
 
 interface HomeFeedListProps {
-  items: readonly FeedItem[];
+  items: readonly FeedItemView[];
 }
 
 export function HomeFeedList({ items }: HomeFeedListProps) {
