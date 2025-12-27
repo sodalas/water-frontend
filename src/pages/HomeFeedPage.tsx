@@ -1,7 +1,7 @@
 // HomeFeedPage.tsx
 import React, { useEffect, useMemo } from "react";
 import { HomeFeedAdapter } from "../domain/feed/HomeFeedAdapter";
-import { HomeFeedContainer } from "../components/HomeFeedContainer";
+import { HomeFeedContainer } from "../components/HomeFeedContainer.tsx";
 
 export function HomeFeedPage() {
   // Adapter is created once per page lifecycle
@@ -11,11 +11,11 @@ export function HomeFeedPage() {
 
   // Explicit lifecycle ownership
   useEffect(() => {
-    adapter.fetch();
+    adapter.fetch("demo-user");
   }, [adapter]);
 
   const handleRefresh = () => {
-    adapter.refresh();
+    adapter.refresh("demo-user");
   };
 
   const handleItemPress = (assertionId: string) => {

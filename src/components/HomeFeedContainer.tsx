@@ -4,7 +4,8 @@ import { useHomeFeed } from "../domain/feed/useHomeFeed";
 import { HomeFeedList } from "./HomeFeedList";
 import { FeedSkeletonList } from "./feed/FeedSkeletonList";
 import { FeedErrorState } from "./feed/FeedErrorState";
-import type { HomeFeedAdapter } from "../domain/feed/HomeFeedAdapter";
+import type { FeedItem, HomeFeedAdapter } from "../domain/feed/HomeFeedAdapter";
+import type { FeedItemView } from "./feed/types";
 
 type HomeFeedContainerProps = {
   adapter: HomeFeedAdapter;
@@ -13,8 +14,19 @@ type HomeFeedContainerProps = {
   onAuthorPress?: (authorId: string) => void;
 };
 
+function toFeedItemView(item: FeedItem): FeedItemView {
+  return {
+    assertionId: item.assertionId,
+    authorName: "Unknown", // placeholder for now
+    authorHandle: "unknown",
+    createdAt: item.createdAt,
+    text: item.text,
+    media: item.media,
+  };
+}
+
 export function HomeFeedContainer(props: HomeFeedContainerProps) {
-  const { adapter, viewerId, onItemPress, onAuthorPress } = props;
+  const { adapter, viewerId } = props;
 
   const state = useHomeFeed(adapter, viewerId);
 
@@ -33,7 +45,7 @@ export function HomeFeedContainer(props: HomeFeedContainerProps) {
     case "error":
       return (
         <FeedErrorState
-          onRetry={() => adapter.refresh()}
+          onRetry={() => adapter.refresh("demo-user")}
           // optional: title/message if you want
           // title="Couldn't load feed"
           // message="Please try again."
@@ -43,9 +55,9 @@ export function HomeFeedContainer(props: HomeFeedContainerProps) {
     case "ready":
       return (
         <HomeFeedList
-          items={state.items}
-          onItemPress={onItemPress}
-          onAuthorPress={onAuthorPress}
+          items={state.items.map(toFeedItemView)}
+          // onItemPress={onItemPress}
+          // onAuthorPress={onAuthorPress}
         />
       );
 

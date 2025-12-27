@@ -22,7 +22,9 @@ export function useHomeFeed(adapter: HomeFeedAdapter, viewerId: string) {
   }, [adapter, viewerId]);
 
   return {
-    ...snapshot, // Expose flattened state (status, data, error)
+    status: snapshot.status,
+    items: snapshot.data ?? [],
+    error: snapshot.error,
     load,
     refresh: load,
   };

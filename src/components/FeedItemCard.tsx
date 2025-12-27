@@ -1,5 +1,5 @@
 // FeedItemCard now uses FeedItemView
-import type { FeedItemView } from "./types";
+import type { FeedItemView } from "./feed/types";
 
 export function FeedItemCard({ item }: { item: FeedItemView }) {
   return (
