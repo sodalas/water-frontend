@@ -1,4 +1,5 @@
 // FeedItemCard now uses FeedItemView
+import { useState } from "react";
 import type { FeedItemView } from "./feed/types";
 import { ComposerSkeleton } from "./ComposerSkeleton";
 
@@ -14,8 +15,12 @@ export function FeedItemCard({
   onActiveReplyIdChange?: (id: string | null) => void;
   replyComposer?: any;
 }) {
+  const [isExpanded, setIsExpanded] = useState(false);
+
   const isReplying = activeReplyId === item.assertionId;
+  const isPublishing = replyComposer?.status === 'publishing';
   const isResponse = item.assertionType === 'response';
+  const replyCount = item.responses?.length ?? 0;
   
   const name = item.author.displayName ?? item.author.handle ?? item.author.id;
 
@@ -114,33 +119,49 @@ export function FeedItemCard({
             {!isResponse && onActiveReplyIdChange && (
                 <button 
                   onClick={() => onActiveReplyIdChange(isReplying ? null : item.assertionId)}
-                  className="text-sm text-text-muted hover:text-white transition"
+                  disabled={isPublishing}
+                  className="text-sm text-text-muted hover:text-white transition disabled:opacity-50 disabled:cursor-not-allowed"
                 >
-                    {isReplying ? "Cancel" : "Reply"}
+                    {isReplying ? "Cancel" : `Reply${replyCount > 0 ? ` (${replyCount})` : ''}`}
                 </button>
             )}
         </footer>
         
         {isReplying && replyComposer && (
             <div className="mt-4 pt-4 border-t border-surface-highlight">
-                <ComposerSkeleton composer={replyComposer} />
+                <ComposerSkeleton composer={replyComposer} autoFocus />
             </div>
         )}
 
         {/* Nested Responses (Visual Depth 1) */}
         {item.responses && item.responses.length > 0 && (
-            <div className="mt-4 space-y-4">
-                {item.responses.map(response => (
-                    <FeedItemCard 
-                      key={response.assertionId} 
-                      item={response} 
-                      // Responses cannot be replied to, so we don't strictly need to pass these props, 
-                      // but good for consistency or if we change depth rules later.
-                      activeReplyId={activeReplyId}
-                      onActiveReplyIdChange={onActiveReplyIdChange}
-                      replyComposer={replyComposer}
-                    />
-                ))}
+            <div className="mt-4 border-l-2 border-surface-highlight pl-4">
+               {!isExpanded ? (
+                   <button 
+                     onClick={() => setIsExpanded(true)}
+                     className="text-sm text-brand-primary hover:text-brand-light transition"
+                   >
+                       View {item.responses.length} replies
+                   </button>
+               ) : (
+                   <div className="space-y-4">
+                       <button 
+                         onClick={() => setIsExpanded(false)}
+                         className="text-sm text-text-muted hover:text-white transition mb-4"
+                       >
+                           Hide replies
+                       </button>
+                       {item.responses.map(response => (
+                        <FeedItemCard 
+                          key={response.assertionId} 
+                          item={response} 
+                          activeReplyId={activeReplyId}
+                          onActiveReplyIdChange={onActiveReplyIdChange}
+                          replyComposer={replyComposer}
+                        />
+                       ))}
+                   </div>
+               )}
             </div>
         )}
       </div>
