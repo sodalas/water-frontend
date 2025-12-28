@@ -1,16 +1,13 @@
 // src/components/feed/types.ts
 export interface FeedItemView {
   assertionId: string;
-  authorName: string;
-  authorHandle: string;
-  avatarUrl?: string;
+  author: {
+    id: string;
+    displayName?: string | null;
+    handle?: string | null;
+    avatarUrl?: string | null;
+  };
   createdAt: string;
   text: string;
-  media?: {
-    type: "image" | "video" | "link";
-    src: string;
-    preview?: string;
-    title?: string;
-    domain?: string;
-  }[];
+  media?: any[];
 }

@@ -19,8 +19,7 @@ type HomeFeedContainerProps = {
 function toFeedItemView(item: FeedItem): FeedItemView {
   return {
     assertionId: item.assertionId,
-    authorName: "Unknown",
-    authorHandle: "unknown",
+    author: item.author,
     createdAt: item.createdAt,
     text: item.text,
     media: item.media,
@@ -42,11 +41,7 @@ export function HomeFeedContainer(props: HomeFeedContainerProps) {
       return <FeedSkeletonList />;
 
     case "error":
-      return (
-        <FeedErrorState
-          onRetry={onRetry}
-        />
-      );
+      return <FeedErrorState onRetry={onRetry} />;
 
     case "ready":
       return (

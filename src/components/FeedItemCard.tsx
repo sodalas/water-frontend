@@ -2,20 +2,21 @@
 import type { FeedItemView } from "./feed/types";
 
 export function FeedItemCard({ item }: { item: FeedItemView }) {
+  const name = item.author.displayName ?? item.author.handle ?? item.author.id;
+
+  const handle = item.author.handle
+    ? item.author.handle.startsWith("@")
+      ? item.author.handle.slice(1)
+      : item.author.handle
+    : null;
   return (
-    <article
-      className="
-        bg-surface-dark border border-surface-highlight
-        rounded-2xl p-5
-        flex gap-4
-      "
-    >
+    <article className="bg-surface-dark border border-surface-highlight rounded-2xl p-5 flex gap-4">
       {/* Avatar */}
       <div className="shrink-0">
-        {item.avatarUrl ? (
+        {item.author.avatarUrl ? (
           <img
-            src={item.avatarUrl}
-            alt={item.authorName}
+            src={item.author.avatarUrl}
+            alt={name}
             className="size-11 rounded-full object-cover"
           />
         ) : (
@@ -23,16 +24,13 @@ export function FeedItemCard({ item }: { item: FeedItemView }) {
         )}
       </div>
 
-      {/* Content */}
       <div className="flex flex-col flex-1 min-w-0">
-        {/* Header */}
         <header className="flex items-center gap-2 mb-2">
-          <span className="font-semibold text-white truncate">
-            {item.authorName}
-          </span>
-          <span className="text-sm text-text-muted truncate">
-            @{item.authorHandle}
-          </span>
+          <span className="font-semibold text-white truncate">{name}</span>
+
+          {handle && (
+            <span className="text-sm text-text-muted truncate">@{handle}</span>
+          )}
           <span className="text-sm text-text-muted">·</span>
           <time className="text-sm text-text-muted whitespace-nowrap">
             {item.createdAt}

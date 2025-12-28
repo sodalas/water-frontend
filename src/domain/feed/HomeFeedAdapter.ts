@@ -5,6 +5,11 @@ export type FeedStatus = "idle" | "loading" | "ready" | "error";
 export interface FeedItem {
   assertionId: string;
   authorId: string;
+  author: {
+    id: string;
+    displayName?: string | null;
+    handle?: string | null;
+  };
   assertionType: string;
   text: string;
   media?: any[];
@@ -46,12 +51,12 @@ export class HomeFeedAdapter {
     try {
       console.debug(`[HomeFeedAdapter] Fetching for ${viewerId}`);
 
-      const response = await fetch('/api/home', {
-        credentials: 'include',
-        headers: { 'Content-Type': 'application/json' }
+      const response = await fetch("/api/home", {
+        credentials: "include",
+        headers: { "Content-Type": "application/json" },
       });
 
-      if (!response.ok) throw new Error('Failed to fetch home feed');
+      if (!response.ok) throw new Error("Failed to fetch home feed");
 
       const data: FeedItem[] = await response.json();
 
