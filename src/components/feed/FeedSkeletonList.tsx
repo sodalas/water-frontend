@@ -1,3 +1,5 @@
+import { FeedSkeletonCard } from "./FeedSkeletonCard";
+
 export function FeedSkeletonList({ count = 3 }: { count?: number }) {
   return (
     <section

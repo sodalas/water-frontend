@@ -5,11 +5,15 @@ import type { FeedItemView } from "./feed/types";
 
 interface HomeFeedListProps {
   items: readonly FeedItemView[];
+  viewerId?: string;
   onItemPress?: (assertionId: string) => void;
   onAuthorPress?: (authorId: string) => void;
+  activeReplyId?: string | null;
+  onActiveReplyIdChange?: (id: string | null) => void;
+  replyComposer?: any;
 }
 
-export function HomeFeedList({ items }: HomeFeedListProps) {
+export function HomeFeedList({ items, viewerId, activeReplyId, onActiveReplyIdChange, replyComposer }: HomeFeedListProps) {
   if (items.length === 0) {
     // Empty feed is valid data, not an error
     return (
@@ -26,7 +30,14 @@ export function HomeFeedList({ items }: HomeFeedListProps) {
   return (
     <section role="feed" aria-label="Home feed" className="flex flex-col gap-4">
       {items.map((item) => (
-        <FeedItemCard key={item.assertionId} item={item} />
+        <FeedItemCard 
+          key={item.assertionId} 
+          item={item} 
+          viewerId={viewerId} 
+          activeReplyId={activeReplyId}
+          onActiveReplyIdChange={onActiveReplyIdChange}
+          replyComposer={replyComposer}
+        />
       ))}
     </section>
   );

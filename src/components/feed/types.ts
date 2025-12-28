@@ -1,6 +1,7 @@
 // src/components/feed/types.ts
 export interface FeedItemView {
   assertionId: string;
+  assertionType: string;
   author: {
     id: string;
     displayName?: string | null;
@@ -10,4 +11,5 @@ export interface FeedItemView {
   createdAt: string;
   text: string;
   media?: any[];
+  responses?: FeedItemView[];
 }

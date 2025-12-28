@@ -10,24 +10,34 @@ type FeedStatus = "idle" | "loading" | "ready" | "error";
 type HomeFeedContainerProps = {
   status: FeedStatus;
   items: FeedItem[];
+  viewerId?: string;
   error: Error | null;
   onRetry: () => void;
   onItemPress?: (assertionId: string) => void;
   onAuthorPress?: (authorId: string) => void;
+  activeReplyId?: string | null;
+  onActiveReplyIdChange?: (id: string | null) => void;
+  replyComposer?: any; // Wrapped composer object
 };
 
+// Recursive conversion for FeedItem -> FeedItemView
 function toFeedItemView(item: FeedItem): FeedItemView {
   return {
     assertionId: item.assertionId,
+    assertionType: item.assertionType,
     author: item.author,
     createdAt: item.createdAt,
     text: item.text,
     media: item.media,
+    responses: item.responses?.map(toFeedItemView)
   };
 }
 
 export function HomeFeedContainer(props: HomeFeedContainerProps) {
-  const { status, items, onRetry, onItemPress, onAuthorPress } = props;
+  const { 
+      status, items, viewerId, onRetry, onItemPress, onAuthorPress,
+      activeReplyId, onActiveReplyIdChange, replyComposer
+  } = props;
 
   switch (status) {
     case "idle":
@@ -47,8 +57,12 @@ export function HomeFeedContainer(props: HomeFeedContainerProps) {
       return (
         <HomeFeedList
           items={items.map(toFeedItemView)}
+          viewerId={viewerId}
           onItemPress={onItemPress}
           onAuthorPress={onAuthorPress}
+          activeReplyId={activeReplyId}
+          onActiveReplyIdChange={onActiveReplyIdChange}
+          replyComposer={replyComposer}
         />
       );
 

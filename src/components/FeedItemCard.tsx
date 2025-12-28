@@ -1,7 +1,22 @@
 // FeedItemCard now uses FeedItemView
 import type { FeedItemView } from "./feed/types";
+import { ComposerSkeleton } from "./ComposerSkeleton";
 
-export function FeedItemCard({ item }: { item: FeedItemView }) {
+export function FeedItemCard({ 
+  item, 
+  activeReplyId, 
+  onActiveReplyIdChange, 
+  replyComposer 
+}: { 
+  item: FeedItemView; 
+  viewerId?: string; // Kept for interface compatibility but maybe unused now unless needed for nested? 
+  activeReplyId?: string | null;
+  onActiveReplyIdChange?: (id: string | null) => void;
+  replyComposer?: any;
+}) {
+  const isReplying = activeReplyId === item.assertionId;
+  const isResponse = item.assertionType === 'response';
+  
   const name = item.author.displayName ?? item.author.handle ?? item.author.id;
 
   const handle = item.author.handle
@@ -9,6 +24,7 @@ export function FeedItemCard({ item }: { item: FeedItemView }) {
       ? item.author.handle.slice(1)
       : item.author.handle
     : null;
+
   return (
     <article className="bg-surface-dark border border-surface-highlight rounded-2xl p-5 flex gap-4">
       {/* Avatar */}
@@ -93,10 +109,40 @@ export function FeedItemCard({ item }: { item: FeedItemView }) {
           </div>
         ) : null}
 
-        {/* Footer actions (placeholder) */}
-        <footer className="mt-4">
-          <div className="size-5 rounded bg-surface-highlight/60" />
+        {/* Footer actions */}
+        <footer className="mt-4 flex items-center gap-4">
+            {!isResponse && onActiveReplyIdChange && (
+                <button 
+                  onClick={() => onActiveReplyIdChange(isReplying ? null : item.assertionId)}
+                  className="text-sm text-text-muted hover:text-white transition"
+                >
+                    {isReplying ? "Cancel" : "Reply"}
+                </button>
+            )}
         </footer>
+        
+        {isReplying && replyComposer && (
+            <div className="mt-4 pt-4 border-t border-surface-highlight">
+                <ComposerSkeleton composer={replyComposer} />
+            </div>
+        )}
+
+        {/* Nested Responses (Visual Depth 1) */}
+        {item.responses && item.responses.length > 0 && (
+            <div className="mt-4 space-y-4">
+                {item.responses.map(response => (
+                    <FeedItemCard 
+                      key={response.assertionId} 
+                      item={response} 
+                      // Responses cannot be replied to, so we don't strictly need to pass these props, 
+                      // but good for consistency or if we change depth rules later.
+                      activeReplyId={activeReplyId}
+                      onActiveReplyIdChange={onActiveReplyIdChange}
+                      replyComposer={replyComposer}
+                    />
+                ))}
+            </div>
+        )}
       </div>
     </article>
   );
