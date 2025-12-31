@@ -1,0 +1,2079 @@
+# ==================================================
+# Path: C:\Users\mrale\.gemini\antigravity\scratch\Water\water-frontend
+# Detected tech: javascript, python, react, typescript
+# ==================================================
+
+## DIRECTORY STRUCTURE
+```
+water-frontend/
+├── .git/
+├── node_modules/
+├── public/
+│   └── vite.svg
+├── src/
+│   ├── assets/
+│   │   └── react.svg
+│   ├── components/
+│   │   ├── feed/
+│   │   │   ├── FeedErrorState.tsx
+│   │   │   ├── FeedSkeletonCard.tsx
+│   │   │   ├── FeedSkeletonList.tsx
+│   │   │   ├── _SkeletonBlock.tsx
+│   │   │   └── types.ts
+│   │   ├── ComposerSkeleton.tsx
+│   │   ├── FeedItemCard.tsx
+│   │   ├── HomeFeedContainer.tsx
+│   │   └── HomeFeedList.tsx
+│   ├── domain/
+│   │   ├── composer/
+│   │   │   ├── DraftStore.ts
+│   │   │   └── useComposer.ts
+│   │   └── feed/
+│   │       ├── HomeFeedAdapter.ts
+│   │       └── useHomeFeed.ts
+│   ├── infrastructure/
+│   │   └── draft/
+│   │       └── Draft.ts
+│   ├── lib/
+│   ├── pages/
+│   │   └── HomeFeedPage.tsx
+│   ├── routes/
+│   │   ├── app-home.tsx
+│   │   └── login.tsx
+│   ├── ui/
+│   │   ├── composer/
+│   │   │   └── previews/
+│   │   │       ├── AttachmentContent.tsx
+│   │   │       ├── AttachmentPreviewShell.tsx
+│   │   │       ├── EmbedAttachmentContent.tsx
+│   │   │       ├── FileAttachmentContent.tsx
+│   │   │       └── ProviderBadge.tsx
+│   │   ├── button.tsx
+│   │   ├── field.tsx
+│   │   ├── form.tsx
+│   │   ├── inline.tsx
+│   │   ├── stack.tsx
+│   │   └── surface.tsx
+│   ├── App.css
+│   ├── index.css
+│   ├── main.tsx
+│   └── router.tsx
+├── .gitignore
+├── LICENSE
+├── README.md
+├── eslint.config.js
+├── index.html
+├── package-lock.json
+├── package.json
+├── tailwind.config.js
+├── tsconfig.app.json
+├── tsconfig.json
+├── tsconfig.node.json
+└── vite.config.ts
+```
+
+## FILE CONTENTS
+
+### eslint.config.js
+```js
+import js from '@eslint/js'
+import globals from 'globals'
+import reactHooks from 'eslint-plugin-react-hooks'
+import reactRefresh from 'eslint-plugin-react-refresh'
+import tseslint from 'typescript-eslint'
+import { defineConfig, globalIgnores } from 'eslint/config'
+
+export default defineConfig([
+  globalIgnores(['dist']),
+  {
+    files: ['**/*.{ts,tsx}'],
+    extends: [
+      js.configs.recommended,
+      tseslint.configs.recommended,
+      reactHooks.configs.flat.recommended,
+      reactRefresh.configs.vite,
+    ],
+    languageOptions: {
+      ecmaVersion: 2020,
+      globals: globals.browser,
+    },
+  },
+])
+
+```
+
+### tailwind.config.js
+```js
+export default {
+  content: [
+    "./index.html",
+    "./src/**/*.{js,ts,jsx,tsx}",
+  ],
+  theme: {
+    extend: {},
+  },
+  plugins: [],
+}
+
+```
+
+### vite.config.ts
+```ts
+import { defineConfig } from 'vite'
+import react from '@vitejs/plugin-react'
+import tailwindcss from 'tailwindcss'
+import autoprefixer from 'autoprefixer'
+
+// https://vite.dev/config/
+export default defineConfig({
+  plugins: [react()],
+  css: {
+    postcss: {
+      plugins: [
+        tailwindcss,
+        autoprefixer,
+      ],
+    },
+  },
+  server: {
+    proxy: {
+      '/api': {
+        target: 'http://localhost:8000',
+        changeOrigin: true,
+      }
+    }
+  }
+})
+
+```
+
+### src\main.tsx
+```tsx
+console.log("MAIN TSX EXECUTED — CSS SHOULD LOAD");
+
+import "./index.css";
+import { StrictMode } from "react";
+import { createRoot } from "react-dom/client";
+import { RouterProvider } from "@tanstack/react-router";
+import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
+import { router } from "./router";
+
+const queryClient = new QueryClient();
+
+createRoot(document.getElementById("root")!).render(
+  <StrictMode>
+    <QueryClientProvider client={queryClient}>
+      <RouterProvider router={router} context={{ queryClient }} />
+    </QueryClientProvider>
+  </StrictMode>
+);
+
+```
+
+### src\router.tsx
+```tsx
+import {
+  createRootRouteWithContext,
+  createRoute,
+  createRouter,
+  redirect,
+  Outlet,
+} from "@tanstack/react-router";
+import { QueryClient } from "@tanstack/react-query";
+import { authClient } from "./lib/auth-client";
+import { Login } from "./routes/login";
+import { AppHome } from "./routes/app-home";
+
+// Context interface for the router
+interface RouterContext {
+  queryClient: QueryClient;
+}
+
+// Root Route
+const rootRoute = createRootRouteWithContext<RouterContext>()({
+  component: () => <Outlet />,
+});
+
+// Login Route (Guest Only)
+const loginRoute = createRoute({
+  getParentRoute: () => rootRoute,
+  path: "/login",
+  beforeLoad: async ({ context }) => {
+    // Check session
+    const session = await context.queryClient.ensureQueryData({
+      queryKey: ["session"],
+      queryFn: () => authClient.getSession().then((r) => r.data),
+    });
+
+    // Redirect if authenticated
+    if (session) {
+      throw redirect({ to: "/app" });
+    }
+  },
+  component: Login,
+});
+
+// App Route (Protected)
+const appRoute = createRoute({
+  getParentRoute: () => rootRoute,
+  path: "/app",
+  beforeLoad: async ({ context }) => {
+    const session = await context.queryClient.ensureQueryData({
+      queryKey: ["session"],
+      queryFn: () => authClient.getSession().then((r) => r.data),
+    });
+
+    // Redirect if guest
+    if (!session) {
+      throw redirect({ to: "/login" });
+    }
+  },
+  component: AppHome,
+});
+
+const indexRoute = createRoute({
+  getParentRoute: () => rootRoute,
+  path: "/",
+  beforeLoad: () => {
+    throw redirect({ to: "/login" });
+  },
+});
+
+// Route Tree
+const routeTree = rootRoute.addChildren([indexRoute, loginRoute, appRoute]);
+
+// Create Router
+export const router = createRouter({
+  routeTree,
+  context: {
+    queryClient: undefined!, // Injected in main.tsx
+  },
+  defaultPreload: "intent",
+});
+
+// Type Safety
+declare module "@tanstack/react-router" {
+  interface Register {
+    router: typeof router;
+  }
+}
+
+```
+
+### src\components\ComposerSkeleton.tsx
+```tsx
+import type { useComposer } from "../domain/composer/useComposer";
+
+type Composer = ReturnType<typeof useComposer>;
+
+export function ComposerSkeleton({ composer, autoFocus }: { composer: Composer; autoFocus?: boolean }) {
+  return (
+    <div style={{ padding: "1rem", borderBottom: "1px solid #333" }}>
+      <div style={{ display: "flex", justifyContent: "space-between", marginBottom: "0.5rem", fontSize: "0.75rem", color: "#888" }}>
+        <div style={{ display: "flex", gap: "1rem" }}>
+          {/* Draft Restored Indicator */}
+          {composer.isRestored && (
+            <span style={{ color: "#4ade80" }}>Draft restored</span>
+          )}
+
+          {/* Revision Context */}
+          {!composer.isRestored && composer.draft.originPublicationId && (
+             <span style={{ color: "#60a5fa" }}>Revising published note</span>
+          )}
+        </div>
+
+        <div style={{ display: "flex", gap: "1rem" }}>
+           {/* Save State (Error hidden per directive) */}
+           {composer.saveStatus === "saving" && <span>Saving...</span>}
+           {composer.saveStatus === "saved" && <span>Saved</span>}
+           
+           {/* Explicit Clear */}
+           <button
+             type="button"
+             onClick={() => {
+                if(window.confirm("This will permanently delete your draft.")) {
+                    composer.clear();
+                }
+             }}
+             style={{ background: "none", border: "none", color: "#ef4444", cursor: "pointer", padding: 0 }}
+           >
+             Clear
+           </button>
+        </div>
+      </div>
+
+      <textarea
+        autoFocus={autoFocus}
+        value={composer.draft.text}
+        onChange={(e) => composer.setText(e.target.value)}
+        placeholder="What's happening?"
+        disabled={composer.status === "publishing"}
+        style={{ width: "100%", height: "80px", marginBottom: "0.5rem", display: "block" }}
+      />
+      
+      <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
+        <div style={{ display: "flex", alignItems: "center", gap: "0.5rem" }}>
+          {/* Media Actions */}
+          <button
+            type="button"
+            onClick={() => {
+                const url = prompt("Enter image URL");
+                if (url) composer.addMedia({ type: "image", src: url });
+            }}
+            disabled={composer.status === "publishing"}
+            style={{ fontSize: "0.875rem", color: "#ccc" }}
+          >
+            Add Image
+          </button>
+          
+           <button
+            type="button"
+            onClick={() => {
+                const url = prompt("Enter link URL");
+                if (url) composer.addMedia({ type: "link", src: url });
+            }}
+            disabled={composer.status === "publishing"}
+            style={{ fontSize: "0.875rem", color: "#ccc" }}
+          >
+            Add Link
+          </button>
+
+          {composer.status === "error" && (
+            <span style={{ color: "red", fontSize: "0.875rem", marginLeft: "8px" }}>
+              {composer.error || "Error publishing"}
+            </span>
+          )}
+          {composer.status === "success" && (
+            <span style={{ color: "green", fontSize: "0.875rem", marginLeft: "8px" }}>
+              Posted!
+            </span>
+          )}
+        </div>
+        
+        <button 
+          type="button" 
+          onClick={() => composer.publish()}
+          disabled={composer.status === "publishing" || (!composer.draft.text.trim() && (composer.draft.media.length === 0))}
+        >
+          {composer.status === "publishing" ? "Posting..." : "Post"}
+        </button>
+      </div>
+      
+      {/* Media Previews */}
+      {composer.draft.media && composer.draft.media.length > 0 && (
+          <div style={{ marginTop: "0.5rem", display: "flex", gap: "0.5rem", flexWrap: "wrap" }}>
+              {composer.draft.media.map((m: any) => (
+                  <div key={m.id} style={{ position: "relative", width: "60px", height: "60px", background: "#333", borderRadius: "4px", overflow: "hidden" }}>
+                      {m.type === "image" ? (
+                          <img src={m.src} alt="" style={{ width: "100%", height: "100%", objectFit: "cover" }} />
+                      ) : (
+                          <div style={{ padding: "4px", fontSize: "0.7rem", color: "#ccc" }}>Link</div>
+                      )}
+                      <button 
+                        onClick={() => composer.removeMedia(m.id)}
+                        style={{ position: "absolute", top: 0, right: 0, background: "rgba(0,0,0,0.5)", color: "white", border: "none", cursor: "pointer", padding: "0 4px" }}
+                      >
+                          &times;
+                      </button>
+                  </div>
+              ))}
+          </div>
+      )}
+    </div>
+  );
+}
+
+```
+
+### src\components\FeedItemCard.tsx
+```tsx
+// FeedItemCard now uses FeedItemView
+import { useState } from "react";
+import type { FeedItemView } from "./feed/types";
+import { ComposerSkeleton } from "./ComposerSkeleton";
+
+export function FeedItemCard({ 
+  item, 
+  viewerId,
+  activeReplyId, 
+  onActiveReplyIdChange, 
+  replyComposer,
+  onRevise
+}: { 
+  item: FeedItemView;
+  viewerId?: string;
+  activeReplyId?: string | null;
+  onActiveReplyIdChange?: (id: string | null) => void;
+  replyComposer?: any;
+  onRevise?: (item: FeedItemView) => void;
+}) {
+  const [isExpanded, setIsExpanded] = useState(false);
+
+  const isReplying = activeReplyId === item.assertionId;
+  const isPublishing = replyComposer?.status === 'publishing';
+  const isResponse = item.assertionType === 'response';
+  const replyCount = item.responses?.length ?? 0;
+  
+  // Author check
+  const isAuthor = viewerId === item.author.id;
+  
+  const name = item.author.displayName ?? item.author.handle ?? item.author.id;
+
+  const handle = item.author.handle
+    ? item.author.handle.startsWith("@")
+      ? item.author.handle.slice(1)
+      : item.author.handle
+    : null;
+
+  return (
+    <article className="bg-surface-dark border border-surface-highlight rounded-2xl p-5 flex gap-4">
+      {/* Avatar */}
+      <div className="shrink-0">
+        {item.author.avatarUrl ? (
+          <img
+            src={item.author.avatarUrl}
+            alt={name}
+            className="size-11 rounded-full object-cover"
+          />
+        ) : (
+          <div className="size-11 rounded-full bg-surface-highlight" />
+        )}
+      </div>
+
+      <div className="flex flex-col flex-1 min-w-0">
+        <header className="flex items-center gap-2 mb-2">
+          <span className="font-semibold text-white truncate">{name}</span>
+
+          {handle && (
+            <span className="text-sm text-text-muted truncate">@{handle}</span>
+          )}
+          <span className="text-sm text-text-muted">·</span>
+          <time className="text-sm text-text-muted whitespace-nowrap">
+            {item.createdAt}
+          </time>
+        </header>
+
+        {/* Text */}
+        {item.text && (
+          <p className="text-text-body leading-relaxed whitespace-pre-wrap mb-3">
+            {item.text}
+          </p>
+        )}
+
+        {/* Media */}
+        {item.media?.length ? (
+          <div className="mt-2 space-y-3">
+            {item.media.map((m, i) => {
+              if (m.type === "image") {
+                return (
+                  <img
+                    key={i}
+                    src={m.src}
+                    alt={m.title ?? ""}
+                    className="
+                      w-full rounded-xl
+                      border border-surface-highlight
+                      object-cover
+                    "
+                  />
+                );
+              }
+
+              if (m.type === "link") {
+                return (
+                  <a
+                    key={i}
+                    href={m.src}
+                    className="
+                      block p-4 rounded-xl
+                      bg-surface-highlight/30
+                      border border-surface-highlight
+                      hover:bg-surface-highlight/50
+                      transition
+                    "
+                  >
+                    <div className="text-sm font-medium text-white truncate">
+                      {m.title ?? m.domain ?? m.src}
+                    </div>
+                    {m.domain && (
+                      <div className="text-xs text-text-muted mt-1">
+                        {m.domain}
+                      </div>
+                    )}
+                  </a>
+                );
+              }
+
+              return null;
+            })}
+          </div>
+        ) : null}
+
+        {/* Footer actions */}
+        <footer className="mt-4 flex items-center gap-4">
+            {!isResponse && onActiveReplyIdChange && (
+                <button 
+                  onClick={() => onActiveReplyIdChange(isReplying ? null : item.assertionId)}
+                  disabled={isPublishing}
+                  className="text-sm text-text-muted hover:text-white transition disabled:opacity-50 disabled:cursor-not-allowed"
+                >
+                    {isReplying ? "Cancel" : `Reply${replyCount > 0 ? ` (${replyCount})` : ''}`}
+                </button>
+            )}
+
+            {/* Revise Button (Author Only, Notes Only) */}
+            {isAuthor && !isResponse && onRevise && (
+                <button
+                    onClick={() => onRevise?.(item)}
+                    className="text-sm text-text-muted hover:text-brand-primary transition"
+                >
+                    Revise
+                </button>
+            )}
+        </footer>
+        
+        {isReplying && replyComposer && (
+            <div className="mt-4 pt-4 border-t border-surface-highlight">
+                <ComposerSkeleton composer={replyComposer} autoFocus />
+            </div>
+        )}
+
+        {/* Nested Responses (Visual Depth 1) */}
+        {item.responses && item.responses.length > 0 && (
+            <div className="mt-4 border-l-2 border-surface-highlight pl-4">
+               {!isExpanded ? (
+                   <button 
+                     onClick={() => setIsExpanded(true)}
+                     className="text-sm text-brand-primary hover:text-brand-light transition"
+                   >
+                       View {item.responses.length} replies
+                   </button>
+               ) : (
+                   <div className="space-y-4">
+                       <button 
+                         onClick={() => setIsExpanded(false)}
+                         className="text-sm text-text-muted hover:text-white transition mb-4"
+                       >
+                           Hide replies
+                       </button>
+                       {item.responses.map(response => (
+                        <FeedItemCard 
+                          key={response.assertionId} 
+                          item={response} 
+                          activeReplyId={activeReplyId}
+                          onActiveReplyIdChange={onActiveReplyIdChange}
+                          replyComposer={replyComposer}
+                        />
+                       ))}
+                   </div>
+               )}
+            </div>
+        )}
+      </div>
+    </article>
+  );
+}
+
+```
+
+### src\components\HomeFeedContainer.tsx
+```tsx
+// HomeFeedContainer.tsx
+import { HomeFeedList } from "./HomeFeedList";
+import { FeedSkeletonList } from "./feed/FeedSkeletonList";
+import { FeedErrorState } from "./feed/FeedErrorState";
+import type { FeedItem } from "../domain/feed/HomeFeedAdapter";
+import type { FeedItemView } from "./feed/types";
+
+type FeedStatus = "idle" | "loading" | "ready" | "error";
+
+type HomeFeedContainerProps = {
+  status: FeedStatus;
+  items: FeedItem[];
+  viewerId?: string;
+  error: Error | null;
+  onRetry: () => void;
+  onItemPress?: (assertionId: string) => void;
+  onAuthorPress?: (authorId: string) => void;
+  activeReplyId?: string | null;
+  onActiveReplyIdChange?: (id: string | null) => void;
+  replyComposer?: any; // Wrapped composer object
+  onRevise?: (item: FeedItemView) => void;
+};
+
+// Recursive conversion for FeedItem -> FeedItemView
+function toFeedItemView(item: FeedItem): FeedItemView {
+  return {
+    assertionId: item.assertionId,
+    assertionType: item.assertionType,
+    author: item.author,
+    createdAt: item.createdAt,
+    text: item.text,
+    media: item.media,
+    responses: item.responses?.map(toFeedItemView)
+  };
+}
+
+export function HomeFeedContainer(props: HomeFeedContainerProps) {
+  const { 
+      status, items, viewerId, onRetry, onItemPress, onAuthorPress,
+      activeReplyId, onActiveReplyIdChange, replyComposer,
+      onRevise
+  } = props;
+
+  switch (status) {
+    case "idle":
+      return (
+        <section aria-label="Home feed (idle)">
+          <p>Feed not loaded.</p>
+        </section>
+      );
+
+    case "loading":
+      return <FeedSkeletonList />;
+
+    case "error":
+      return <FeedErrorState onRetry={onRetry} />;
+
+    case "ready":
+      return (
+        <HomeFeedList
+          items={items.map(toFeedItemView)}
+          viewerId={viewerId}
+          onItemPress={onItemPress}
+          onAuthorPress={onAuthorPress}
+          activeReplyId={activeReplyId}
+          onActiveReplyIdChange={onActiveReplyIdChange}
+          replyComposer={replyComposer}
+          onRevise={onRevise}
+        />
+      );
+
+    default:
+      return null;
+  }
+}
+
+```
+
+### src\components\HomeFeedList.tsx
+```tsx
+// HomeFeedList.tsx
+// HomeFeedList uses FeedItemView
+import { FeedItemCard } from "./FeedItemCard.tsx";
+import type { FeedItemView } from "./feed/types";
+
+interface HomeFeedListProps {
+  items: readonly FeedItemView[];
+  viewerId?: string;
+  onItemPress?: (assertionId: string) => void;
+  onAuthorPress?: (authorId: string) => void;
+  activeReplyId?: string | null;
+  onActiveReplyIdChange?: (id: string | null) => void;
+  replyComposer?: any;
+  onRevise?: (item: FeedItemView) => void;
+}
+
+export function HomeFeedList({ items, viewerId, activeReplyId, onActiveReplyIdChange, replyComposer, onRevise }: HomeFeedListProps) {
+  if (items.length === 0) {
+    // Empty feed is valid data, not an error
+    return (
+      <section
+        role="feed"
+        aria-label="Home feed"
+        className="flex flex-col gap-4"
+      >
+        <p className="text-slate-400 text-sm">No posts yet.</p>
+      </section>
+    );
+  }
+
+  return (
+    <section role="feed" aria-label="Home feed" className="flex flex-col gap-4">
+      {items.map((item) => (
+        <FeedItemCard 
+          key={item.assertionId} 
+          item={item} 
+          viewerId={viewerId} 
+          activeReplyId={activeReplyId}
+          onActiveReplyIdChange={onActiveReplyIdChange}
+          replyComposer={replyComposer}
+          onRevise={onRevise}
+        />
+      ))}
+    </section>
+  );
+}
+
+```
+
+### src\components\feed\FeedErrorState.tsx
+```tsx
+// src/components/feed/FeedErrorState.tsx
+import React from "react";
+
+interface FeedErrorStateProps {
+  title?: string;
+  message?: string;
+  onRetry: () => void;
+}
+
+export function FeedErrorState({
+  title = "Couldn't load feed",
+  message = "We're having trouble connecting to the server right now. Please check your connection.",
+  onRetry,
+}: FeedErrorStateProps) {
+  return (
+    <section
+      role="alert"
+      aria-live="assertive"
+      className="
+        flex flex-col items-center justify-center
+        text-center
+        gap-4
+        py-16
+      "
+    >
+      {/* Icon placeholder */}
+      <div
+        className="
+          size-14 rounded-full
+          bg-surface-highlight/40
+          flex items-center justify-center
+        "
+        aria-hidden="true"
+      >
+        <div className="size-6 rounded bg-surface-highlight/70" />
+      </div>
+
+      {/* Text */}
+      <div className="max-w-sm">
+        <h2 className="text-lg font-semibold text-white mb-1">{title}</h2>
+        <p className="text-sm text-text-muted">{message}</p>
+      </div>
+
+      {/* Action */}
+      <button
+        type="button"
+        onClick={onRetry}
+        className="
+          mt-2
+          inline-flex items-center justify-center
+          rounded-full
+          bg-accent-primary
+          px-6 py-2
+          text-sm font-medium text-white
+          hover:bg-accent-primary/90
+          focus:outline-none focus-visible:ring
+          focus-visible:ring-accent-primary/60
+        "
+      >
+        Retry
+      </button>
+    </section>
+  );
+}
+
+```
+
+### src\components\feed\FeedSkeletonCard.tsx
+```tsx
+import SkeletonBlock from "./_SkeletonBlock";
+
+export function FeedSkeletonCard() {
+  return (
+    <article
+      className="
+          bg-surface-dark border border-surface-highlight
+          rounded-2xl p-5
+          flex gap-4
+          animate-pulse
+        "
+    >
+      {/* Avatar */}
+      <div className="shrink-0">
+        <SkeletonBlock className="size-11 rounded-full" />
+      </div>
+
+      {/* Content */}
+      <div className="flex flex-col flex-1 gap-3">
+        {/* Header */}
+        <div className="flex gap-2 items-center">
+          <SkeletonBlock className="h-4 w-32" />
+          <SkeletonBlock className="h-4 w-20" />
+          <SkeletonBlock className="h-4 w-10" />
+        </div>
+
+        {/* Text lines */}
+        <SkeletonBlock className="h-4 w-full" />
+        <SkeletonBlock className="h-4 w-11/12" />
+        <SkeletonBlock className="h-4 w-8/12" />
+
+        {/* Media placeholder (optional, but included per design) */}
+        <SkeletonBlock className="h-48 w-full rounded-xl mt-2" />
+
+        {/* Footer */}
+        <SkeletonBlock className="h-4 w-6 mt-3" />
+      </div>
+    </article>
+  );
+}
+
+```
+
+### src\components\feed\FeedSkeletonList.tsx
+```tsx
+import { FeedSkeletonCard } from "./FeedSkeletonCard";
+
+export function FeedSkeletonList({ count = 3 }: { count?: number }) {
+  return (
+    <section
+      role="feed"
+      aria-label="Loading feed"
+      className="flex flex-col gap-4"
+    >
+      {Array.from({ length: count }).map((_, i) => (
+        <FeedSkeletonCard key={i} />
+      ))}
+    </section>
+  );
+}
+
+```
+
+### src\components\feed\types.ts
+```ts
+// src/components/feed/types.ts
+export interface FeedItemView {
+  assertionId: string;
+  assertionType: string;
+  author: {
+    id: string;
+    displayName?: string | null;
+    handle?: string | null;
+    avatarUrl?: string | null;
+  };
+  createdAt: string;
+  text: string;
+  media?: any[];
+  responses?: FeedItemView[];
+}
+
+```
+
+### src\components\feed\_SkeletonBlock.tsx
+```tsx
+function SkeletonBlock({ className = "" }: { className?: string }) {
+  return <div className={`bg-surface-highlight/60 rounded ${className}`} />;
+}
+
+export default SkeletonBlock;
+
+```
+
+### src\domain\composer\DraftStore.ts
+```ts
+export type ComposerDraft = Record<string, any>;
+
+export interface DraftStore {
+  load(viewerId: string): Promise<ComposerDraft | null>;
+  save(viewerId: string, draft: ComposerDraft): Promise<void>;
+  clear(viewerId: string): Promise<void>;
+}
+
+```
+
+### src\domain\composer\useComposer.ts
+```ts
+import { useState, useCallback, useRef, useEffect } from "react";
+import { Draft } from "../../infrastructure/draft/Draft";
+
+export type ComposerStatus = "idle" | "publishing" | "error" | "success";
+export type SaveStatus = "idle" | "saving" | "saved" | "error";
+
+export type MediaItem = {
+  id: string;
+  type: "image" | "link";
+  src: string;
+};
+
+export type ComposerDraft = {
+  text: string;
+  media: MediaItem[];
+  originPublicationId?: string;
+};
+
+export type PublishOptions = {
+  replyTo?: string;
+  clearDraft?: boolean; // opt-in only
+};
+
+export function useComposer(viewerId: string) {
+  // Enforce Structural Recovery: Load exactly once on mount/viewerId
+  const hasLoadedRef = useRef(false);
+
+  // Single mutable source of truth
+  const [draft, setDraft] = useState<ComposerDraft>({
+    text: "",
+    media: [],
+  });
+
+  const [status, setStatus] = useState<ComposerStatus>("idle");
+  const [error, setError] = useState<string | null>(null);
+
+  // UI Affordances
+  const [saveStatus, setSaveStatus] = useState<SaveStatus>("idle");
+  // Invariant: isRestored may be true ONLY when load() hydrates a persisted draft with meaningful content (non-empty text or media); blank drafts must never surface a "restored" UI.
+  const [isRestored, setIsRestored] = useState(false);
+
+  // ... (persistence and helpers remain same)
+  // Persistence helpers
+  // Persistence helpers
+  const save = useCallback(async () => {
+    if (!viewerId) return;
+    try {
+      await Draft.save(viewerId, draft);
+      setSaveStatus("saved");
+    } catch (e) {
+      // Internal tracking only, per directive (so UI remains silent/last known good)
+      setSaveStatus("error");
+    }
+  }, [viewerId, draft]);
+
+  const load = useCallback(async () => {
+    if (!viewerId) return;
+    const loaded = await Draft.load(viewerId);
+    if (loaded) {
+      // Ensure shape integrity when loading potentially partial/old drafts
+      setDraft({
+        text: typeof loaded.text === "string" ? loaded.text : "",
+        media: Array.isArray(loaded.media) ? loaded.media : [],
+        originPublicationId:
+          typeof loaded.originPublicationId === "string"
+            ? loaded.originPublicationId
+            : undefined,
+      });
+      // IsRestored = true ONLY on load hydration IF content exists
+      if (loaded.text.trim() || loaded.media.length > 0) {
+        setIsRestored(true);
+      }
+    }
+  }, [viewerId]);
+
+  // Structural Recovery: Auto-load on viewer availability
+  useEffect(() => {
+    if (!viewerId) return;
+    if (hasLoadedRef.current) return;
+
+    hasLoadedRef.current = true;
+    load();
+  }, [viewerId, load]);
+
+  // Autosave: Persist draft changes after 1s of inactivity
+  useEffect(() => {
+    if (!viewerId) return;
+    // Don't autosave if empty? Actually, empty might be a valid draft change (clearing).
+    // But we might want to avoid saving on initial mount empty state if meaningless.
+    // However, structural recovery means exact state.
+
+    // Simple debounce
+    const timer = setTimeout(() => {
+      save();
+    }, 1000);
+
+    return () => clearTimeout(timer);
+  }, [draft, viewerId, save]);
+
+  const clear = useCallback(async () => {
+    if (!viewerId) return;
+    await Draft.clear(viewerId);
+    // Unified reset
+    setDraft({ text: "", media: [] });
+    setStatus("idle");
+    setError(null);
+  }, [viewerId]);
+
+  const setText = useCallback(
+    (newText: string) => {
+      setDraft((prev) => ({ ...prev, text: newText }));
+      // Mutation interactions dismiss "Restored" state
+      setIsRestored(false);
+      // Pending save
+      setSaveStatus("saving");
+
+      if (status === "success") {
+        setStatus("idle");
+      }
+    },
+    [status]
+  );
+
+  const addMedia = useCallback(
+    (item: { type: "image" | "link"; src: string }) => {
+      // Generate stable ID
+      const id = Math.random().toString(36).substr(2, 9);
+      setDraft((prev) => ({
+        ...prev,
+        media: [...prev.media, { ...item, id }],
+      }));
+      setIsRestored(false);
+      setSaveStatus("saving");
+    },
+    []
+  );
+
+  const replaceDraft = useCallback(
+    async (newDraft: ComposerDraft) => {
+      setDraft(newDraft);
+      if (viewerId) {
+        await Draft.save(viewerId, newDraft);
+      }
+    },
+    [viewerId]
+  );
+
+  const removeMedia = useCallback((id: string) => {
+    setDraft((prev) => ({
+      ...prev,
+      media: prev.media.filter((m) => m.id !== id),
+    }));
+  }, []);
+
+  const publish = useCallback(
+    async (
+      viewer?: {
+        id: string;
+        displayName?: string | null;
+        handle?: string | null;
+      },
+      options?: PublishOptions
+    ) => {
+      if (!draft.text.trim() && draft.media.length === 0) return null;
+
+      setStatus("publishing");
+      setError(null);
+
+      try {
+        // Construct CSO from draft state (Source of Truth)
+        const cso = {
+          text: draft.text,
+          assertionType: options?.replyTo ? "response" : "note",
+          visibility: "public",
+          refs: options?.replyTo ? [options.replyTo] : [],
+          media: draft.media,
+          originPublicationId: draft.originPublicationId,
+        };
+
+        const response = await fetch("/api/publish", {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify({
+            cso,
+            // Explicit opt-in for "fire-and-forget" behavior (e.g. tweets/replies).
+            // Default is false (retention) for safety.
+            clearDraft: options?.clearDraft,
+          }),
+        });
+
+        if (!response.ok) {
+          throw new Error(`Publish failed: ${response.status}`);
+        }
+
+        const { assertionId, createdAt } = await response.json();
+
+        // Lifecycle Transition: Draft -> Publication
+        // We only reset the local composer state.
+        // Backend draft retention is handled via the clearDraft flag.
+        setDraft({ text: "", media: [] });
+        setStatus("success");
+
+        // Construct minimal FeedItem
+        if (viewerId && viewer) {
+          return {
+            assertionId,
+            authorId: viewerId,
+            author: {
+              id: viewerId,
+              displayName: viewer.displayName ?? null,
+              handle: viewer.handle ?? null,
+            },
+            assertionType: cso.assertionType,
+            text: cso.text,
+            createdAt,
+            visibility: cso.visibility,
+            replyTo: options?.replyTo,
+            media: cso.media,
+          };
+        }
+        return null;
+      } catch (err) {
+        console.error("Publish error:", err);
+        setStatus("error");
+        setError(err instanceof Error ? err.message : "Failed to publish");
+        return null;
+      }
+    },
+    [draft, viewerId]
+  );
+
+  return {
+    draft,
+    setText,
+    addMedia,
+    removeMedia,
+    replaceDraft,
+    status,
+    error,
+    save,
+    load,
+    clear,
+    publish,
+    saveStatus,
+    isRestored,
+  };
+}
+
+```
+
+### src\domain\feed\HomeFeedAdapter.ts
+```ts
+// src/domain/feed/HomeFeedAdapter.ts
+
+export type FeedStatus = "idle" | "loading" | "ready" | "error";
+
+export interface FeedItem {
+  assertionId: string;
+  authorId: string;
+  author: {
+    id: string;
+    displayName?: string | null;
+    handle?: string | null;
+  };
+  assertionType: string;
+  text: string;
+  media?: any[];
+  createdAt: string;
+  visibility: string;
+  replyTo?: string;
+  responses?: FeedItem[];
+}
+
+export interface FeedSnapshot {
+  status: FeedStatus;
+  data: FeedItem[] | null;
+  error: Error | null;
+  nextCursor: string | null;
+}
+
+/**
+ * Platform-Agnostic Adapter for the Home Feed.
+ * Encapsulates state definitions, transition logic, and data fetching.
+ *
+ */
+
+export class HomeFeedAdapter {
+  private snapshot: FeedSnapshot = this.idle();
+
+  idle(): FeedSnapshot {
+    return { status: "idle", data: null, error: null, nextCursor: null };
+  }
+
+  loading(existingData: FeedItem[] | null = null): FeedSnapshot {
+    return { status: "loading", data: existingData, error: null, nextCursor: this.snapshot.nextCursor };
+  }
+
+  getSnapshot(): FeedSnapshot {
+    return this.snapshot;
+  }
+
+  async fetch(viewerId: string, cursor: string | null = null): Promise<FeedSnapshot> {
+    // Keep existing data if paging
+    this.snapshot = this.loading(cursor ? this.snapshot.data : null);
+
+    try {
+      console.debug(`[HomeFeedAdapter] Fetching for ${viewerId}, cursor: ${cursor}`);
+
+      const query = cursor ? `?cursor=${encodeURIComponent(cursor)}` : "";
+      const response = await fetch(`/api/home${query}`, {
+        credentials: "include",
+        headers: { "Content-Type": "application/json" },
+      });
+
+      if (!response.ok) throw new Error("Failed to fetch home feed");
+
+      const { items, nextCursor } = await response.json();
+
+      // If paging, append. If first load, replace.
+      const newData = cursor && this.snapshot.data 
+        ? [...this.snapshot.data, ...items] 
+        : items;
+
+      this.snapshot = {
+        status: "ready",
+        data: newData,
+        error: null,
+        nextCursor
+      };
+    } catch (error) {
+      this.snapshot = {
+        status: "error",
+        data: this.snapshot.data, // Keep old data on error
+        error:
+          error instanceof Error ? error : new Error("Unknown Adapter Error"),
+        nextCursor: this.snapshot.nextCursor
+      };
+    }
+
+    return this.snapshot;
+  }
+
+  async refresh(viewerId: string) {
+    return this.fetch(viewerId, null);
+  }
+}
+
+```
+
+### src\domain\feed\useHomeFeed.ts
+```ts
+// src/domain/feed/useHomeFeed.ts
+import { useState, useEffect, useCallback } from "react";
+import type { HomeFeedAdapter, FeedSnapshot } from "./HomeFeedAdapter";
+
+export function useHomeFeed(adapter: HomeFeedAdapter, viewerId: string) {
+  const [snapshot, setSnapshot] = useState<FeedSnapshot>(adapter.getSnapshot());
+
+  // Reset to idle if viewer changes (Safety)
+  useEffect(() => {
+    setSnapshot(adapter.idle());
+  }, [adapter, viewerId]);
+
+  const load = useCallback(async () => {
+    if (!viewerId) return;
+
+    // Explicit Transition: Loading
+    setSnapshot(adapter.loading());
+
+    // Delegate transitions to adapter
+    const result = await adapter.fetch(viewerId);
+    setSnapshot(result);
+  }, [adapter, viewerId]);
+
+  // Explicit Transition: Load More
+  const loadMore = useCallback(async () => {
+    if (!viewerId || !snapshot.nextCursor || snapshot.status === "loading") return;
+
+    // Delegate transitions to adapter (it handles appending)
+    const result = await adapter.fetch(viewerId, snapshot.nextCursor);
+    setSnapshot(result);
+  }, [adapter, viewerId, snapshot.nextCursor, snapshot.status]);
+
+  // Prepend Logic for Optimistic Updates
+  const prepend = useCallback((item: any) => { // Using any broadly here, but should match FeedItem
+    setSnapshot(current => {
+      if (!current.data) return current;
+      
+      // Deduplicate
+      if (current.data.some(existing => existing.assertionId === item.assertionId)) {
+        return current;
+      }
+
+      return {
+        ...current,
+        data: [item, ...current.data]
+      };
+    });
+  }, []);
+
+  const addResponse = useCallback((parentId: string, responseItem: any) => {
+    setSnapshot(current => {
+      if (!current.data) return current;
+
+      const newData = current.data.map(parent => {
+         if (parent.assertionId !== parentId) return parent;
+
+         // Check if response already exists
+         const existingResponses = (parent as any).responses || []; // Type cast if necessary until FeedItem updated
+         if (existingResponses.some((r: any) => r.assertionId === responseItem.assertionId)) {
+             return parent;
+         }
+
+         return {
+             ...parent,
+             responses: [...existingResponses, responseItem]
+         };
+      });
+
+      return {
+          ...current,
+          data: newData
+      };
+    });
+  }, []);
+
+  return {
+    status: snapshot.status,
+    items: snapshot.data ?? [],
+    error: snapshot.error,
+    nextCursor: snapshot.nextCursor,
+    load,
+    loadMore,
+    refresh: load,
+    prepend,
+    addResponse,
+  };
+}
+
+```
+
+### src\infrastructure\draft\Draft.ts
+```ts
+import type { ComposerDraft, DraftStore } from '../../domain/composer/DraftStore';
+
+// Transport Envelope (Private to Infrastructure)
+interface DraftEnvelope {
+  clientId: string;
+  draft: ComposerDraft;
+  schemaVersion?: number;
+}
+
+const CLIENT_ID = 'water-web-client-v1';
+
+export const Draft: DraftStore = {
+  async load(viewerId: string): Promise<ComposerDraft | null> {
+    if (!viewerId) return null;
+    try {
+      const response = await fetch('/api/composer', {
+        method: 'GET',
+        credentials: 'include',
+        headers: {
+            'Content-Type': 'application/json',
+        }
+      });
+      
+      if (response.status === 204) return null;
+      if (!response.ok) throw new Error(`Draft Load Failed: ${response.status}`);
+
+      const envelope: DraftEnvelope = await response.json();
+      // Unwrap: Domain only sees the draft content
+      return envelope.draft;
+    } catch (e) {
+      console.error('Draft Load Error:', e);
+      return null;
+    }
+  },
+
+  async save(viewerId: string, draft: ComposerDraft): Promise<void> {
+    if (!viewerId) return;
+    
+    // Wrap: Create Envelope
+    const envelope: DraftEnvelope = {
+        clientId: CLIENT_ID,
+        draft: draft
+    };
+
+    try {
+        const response = await fetch('/api/composer', {
+            method: 'PUT',
+            credentials: 'include',
+            headers: {
+                'Content-Type': 'application/json'
+            },
+            body: JSON.stringify(envelope)
+        });
+
+        if (!response.ok) throw new Error(`Draft Save Failed: ${response.status}`);
+    } catch (e) {
+        console.error('Draft Save Error:', e);
+        throw e;
+    }
+  },
+
+  async clear(viewerId: string): Promise<void> {
+    if (!viewerId) return;
+    try {
+      await fetch('/api/composer', { method: 'DELETE', credentials: 'include' });
+    } catch (e) {
+        console.error('Draft Clear Error:', e);
+    }
+  }
+};
+
+```
+
+### src\pages\HomeFeedPage.tsx
+```tsx
+// HomeFeedPage.tsx
+import { useMemo, useState } from "react";
+import { HomeFeedAdapter } from "../domain/feed/HomeFeedAdapter";
+import { HomeFeedContainer } from "../components/HomeFeedContainer.tsx";
+import { useHomeFeed } from "../domain/feed/useHomeFeed";
+import { useComposer } from "../domain/composer/useComposer";
+import { ComposerSkeleton } from "../components/ComposerSkeleton";
+import { authClient } from "../lib/auth-client";
+
+export function HomeFeedPage() {
+  const { data: session } = authClient.useSession();
+  const viewerId = session?.user.id ?? null;
+
+  // Adapter is created once per page lifecycle
+  const adapter = useMemo(() => {
+    return new HomeFeedAdapter();
+  }, []);
+
+  const { status, items, error, refresh, prepend, addResponse } = useHomeFeed(adapter, viewerId || ""); 
+  const mainComposer = useComposer(viewerId || "");
+  const replyComposer = useComposer(viewerId || "");
+  
+  const [activeReplyId, setActiveReplyId] = useState<string | null>(null);
+
+  // Main Composer: Optimistic Prepend
+  const wrappedMainComposer = useMemo(() => {
+    return {
+      ...mainComposer,
+      publish: async () => {
+        // Opt-in to "tweet" behavior: clear draft after publish ONLY if not revising
+        // If revising, we retain the draft to allow for further edits loop.
+        const isRevising = !!mainComposer.draft.originPublicationId;
+        const item = await mainComposer.publish(session?.user, { clearDraft: !isRevising });
+        if (item) {
+          prepend(item);
+        }
+        return item;
+      }
+    };
+  }, [mainComposer, prepend, session?.user]);
+
+  // Reply Composer: Optimistic Response + Close on success
+  const wrappedReplyComposer = useMemo(() => {
+    return {
+      ...replyComposer,
+      publish: async () => {
+        if (!activeReplyId) return null;
+        
+        // Opt-in to "tweet" behavior: clear draft after publish
+        const item = await replyComposer.publish(session?.user, { replyTo: activeReplyId, clearDraft: true });
+        if (item) {
+            addResponse(activeReplyId, item);
+            setActiveReplyId(null);
+        }
+        return item;
+      }
+    };
+  }, [replyComposer, activeReplyId, addResponse, session?.user]);
+
+  // Initial Load handled internally by useComposer now.
+  // useEffect(() => {
+  //   if (viewerId) load();
+  // }, [load, viewerId]);
+
+  const handleRefresh = () => {
+    refresh();
+  };
+
+  const handleItemPress = (assertionId: string) => {
+    console.log("Navigate to assertion:", assertionId);
+  };
+
+  const handleAuthorPress = (authorId: string) => {
+    console.log("Navigate to author:", authorId);
+  };
+
+  // Revise Flow: Fork publication into draft
+  const handleRevise = async (item: any) => {
+    // We only support revising notes for now (text/media)
+    const draft = {
+        text: item.text ?? "",
+        media: item.media ?? [],
+        originPublicationId: item.assertionId
+    };
+    await mainComposer.replaceDraft(draft);
+    
+    // Scroll to top to see composer (simple implementation)
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+    
+    // Focus logic would ideally go here if we exposed a ref
+  };
+
+  return (
+    <main aria-label="Home feed page">
+      <ComposerSkeleton composer={wrappedMainComposer} />
+      
+      <button type="button" onClick={handleRefresh}>
+        Refresh
+      </button>
+
+      <HomeFeedContainer
+        status={status}
+        items={items}
+        viewerId={viewerId || undefined}
+        error={error}
+        onRetry={refresh}
+        onItemPress={handleItemPress}
+        onAuthorPress={handleAuthorPress}
+        activeReplyId={activeReplyId}
+        onActiveReplyIdChange={setActiveReplyId}
+        replyComposer={wrappedReplyComposer}
+        onRevise={handleRevise}
+      />
+    </main>
+  );
+}
+
+```
+
+### src\routes\app-home.tsx
+```tsx
+// import { useQueryClient } from "@tanstack/react-query";
+// import { useRouter } from "@tanstack/react-router";
+// import { authClient } from "../lib/auth-client";
+// import { useSession } from "../lib/useSession";
+// import { Button } from "../ui/button";
+// import { Stack } from "../ui/stack";
+import { Surface } from "../ui/surface";
+import { HomeFeedPage } from "../pages/HomeFeedPage";
+
+export function AppHome() {
+  // const { data: session } = useSession();
+  // const queryClient = useQueryClient();
+  // const router = useRouter();
+
+  // const handleLogout = async () => {
+  //   await authClient.signOut();
+  //   await queryClient.invalidateQueries({ queryKey: ["session"] });
+  //   router.invalidate();
+  // };
+
+  return (
+    <div className="p-8 max-w-lg mx-auto">
+      <Surface>
+        <HomeFeedPage />
+      </Surface>
+    </div>
+  );
+}
+
+```
+
+### src\routes\login.tsx
+```tsx
+import { useState } from 'react'
+import { useRouter } from '@tanstack/react-router'
+import { useQueryClient } from '@tanstack/react-query'
+import { authClient } from '../lib/auth-client'
+import { Field } from '../ui/field'
+import { Button } from '../ui/button'
+import { Form } from '../ui/form'
+import { Surface } from '../ui/surface'
+
+export function Login() {
+  const [email, setEmail] = useState('')
+  const [password, setPassword] = useState('')
+  const [error, setError] = useState('')
+  const router = useRouter()
+  const queryClient = useQueryClient()
+
+  const handleLogin = async (e: React.FormEvent) => {
+    e.preventDefault()
+    const { error } = await authClient.signIn.email({
+      email,
+      password
+    })
+
+    if (error) {
+      setError(error.message ?? "Unknown error")
+      return
+    }
+
+    await queryClient.refetchQueries({ queryKey: ["session"] })
+    await router.navigate({ to: "/app" })
+  }
+
+  return (
+    <div className="mx-auto max-w-sm mt-20">
+      <Surface>
+        <Form onSubmit={handleLogin}>
+          <h1 className="text-2xl font-bold mb-2">Login</h1>
+          
+          <Field label="Email" htmlFor="email" error={error}>
+            <input 
+                id="email"
+                name="email" 
+                value={email} 
+                onChange={e => setEmail(e.target.value)}
+                className="block w-full rounded-md border-gray-300 shadow-sm border p-2 text-sm"
+            />
+          </Field>
+
+          <Field label="Password" htmlFor="password">
+            <input 
+                id="password"
+                type="password" 
+                name="password" 
+                value={password} 
+                onChange={e => setPassword(e.target.value)}
+                className="block w-full rounded-md border-gray-300 shadow-sm border p-2 text-sm"
+            />
+          </Field>
+
+          <Button type="submit">Sign In</Button>
+        </Form>
+      </Surface>
+    </div>
+  )
+}
+
+```
+
+### src\ui\button.tsx
+```tsx
+import type { ButtonHTMLAttributes } from 'react'
+import clsx from 'clsx'
+
+interface ButtonProps
+  extends ButtonHTMLAttributes<HTMLButtonElement> {
+  variant?: 'primary' | 'secondary'
+  loading?: boolean
+}
+
+export function Button({
+  variant = 'primary',
+  loading = false,
+  disabled,
+  className,
+  children,
+  ...props
+}: ButtonProps) {
+  const isDisabled = disabled || loading
+
+  return (
+    <button
+      {...props}
+      disabled={isDisabled}
+      className={clsx(
+        'inline-flex items-center justify-center rounded px-4 py-2 text-sm font-medium',
+        'focus:outline-none focus-visible:ring-2 focus-visible:ring-offset-2',
+        {
+          'bg-gray-900 text-white hover:bg-gray-800 focus-visible:ring-gray-900':
+            variant === 'primary' && !isDisabled,
+          'bg-gray-100 text-gray-900 hover:bg-gray-200 focus-visible:ring-gray-400':
+            variant === 'secondary' && !isDisabled,
+          'opacity-50 cursor-not-allowed': isDisabled,
+        },
+        className
+      )}
+    >
+      {children}
+    </button>
+  )
+}
+
+```
+
+### src\ui\field.tsx
+```tsx
+import type { ReactNode } from 'react'
+
+interface FieldProps {
+  label: string
+  htmlFor?: string
+  hint?: string
+  error?: string
+  children: ReactNode
+}
+
+export function Field({
+  label,
+  htmlFor,
+  hint,
+  error,
+  children,
+}: FieldProps) {
+  return (
+    <div className="space-y-1">
+      <label
+        htmlFor={htmlFor}
+        className="block text-sm font-medium text-gray-900"
+      >
+        {label}
+      </label>
+
+      <div>{children}</div>
+
+      {hint && !error && (
+        <p className="text-sm text-gray-500">{hint}</p>
+      )}
+
+      {error && (
+        <p className="text-sm text-red-600">{error}</p>
+      )}
+    </div>
+  )
+}
+
+```
+
+### src\ui\form.tsx
+```tsx
+import type { FormHTMLAttributes } from 'react'
+import { Stack } from './stack'
+
+interface FormProps extends FormHTMLAttributes<HTMLFormElement> {
+  gap?: 'sm' | 'md' | 'lg'
+}
+
+export function Form({
+  gap = 'md',
+  children,
+  ...props
+}: FormProps) {
+  return (
+    <Stack as="form" gap={gap} {...props}>
+      {children}
+    </Stack>
+  )
+}
+
+```
+
+### src\ui\inline.tsx
+```tsx
+import type { ReactNode, ElementType } from 'react'
+import clsx from 'clsx'
+
+type Gap = 'sm' | 'md' | 'lg'
+type Align = 'start' | 'center' | 'end'
+
+interface InlineProps {
+  as?: ElementType
+  gap?: Gap
+  align?: Align
+  className?: string
+  children: ReactNode
+}
+
+const gapClasses: Record<Gap, string> = {
+  sm: 'gap-2',
+  md: 'gap-4',
+  lg: 'gap-6',
+}
+
+const alignClasses: Record<Align, string> = {
+  start: 'items-start',
+  center: 'items-center',
+  end: 'items-end',
+}
+
+export function Inline({
+  as: Component = 'div',
+  gap = 'md',
+  align = 'center',
+  className,
+  children,
+}: InlineProps) {
+  return (
+    <Component
+      className={clsx(
+        'flex',
+        gapClasses[gap],
+        alignClasses[align],
+        className
+      )}
+    >
+      {children}
+    </Component>
+  )
+}
+
+```
+
+### src\ui\stack.tsx
+```tsx
+import type { ReactNode, ElementType, ComponentPropsWithoutRef } from 'react'
+import clsx from 'clsx'
+
+type Gap = 'sm' | 'md' | 'lg'
+
+type StackProps<T extends ElementType> = {
+  as?: T
+  gap?: Gap
+  className?: string
+  children: ReactNode
+} & ComponentPropsWithoutRef<T>
+
+const gapClasses: Record<Gap, string> = {
+  sm: 'space-y-2',
+  md: 'space-y-4',
+  lg: 'space-y-6',
+}
+
+export function Stack<T extends ElementType = 'div'>({
+  as,
+  gap = 'md',
+  className,
+  children,
+  ...props
+}: StackProps<T>) {
+  const Component = as || 'div'
+  return (
+    <Component className={clsx(gapClasses[gap], className)} {...props}>
+      {children}
+    </Component>
+  )
+}
+
+```
+
+### src\ui\surface.tsx
+```tsx
+import type { ReactNode, ElementType } from 'react'
+import clsx from 'clsx'
+
+interface SurfaceProps {
+  as?: ElementType
+  className?: string
+  children: ReactNode
+}
+
+export function Surface({
+  as: Component = 'div',
+  className,
+  children,
+}: SurfaceProps) {
+  return (
+    <Component
+      className={clsx(
+        'rounded-lg border border-gray-200 bg-white p-6',
+        className
+      )}
+    >
+      {children}
+    </Component>
+  )
+}
+
+```
+
+### src\ui\composer\previews\AttachmentContent.tsx
+```tsx
+import React from "react";
+
+type AttachmentContentProps = {
+  thumbnail?: React.ReactNode;
+  title: React.ReactNode;
+  meta?: React.ReactNode;
+};
+
+export function AttachmentContent({
+  thumbnail,
+  title,
+  meta,
+}: AttachmentContentProps) {
+  return (
+    <div className="grid grid-cols-[64px_minmax(0,1fr)] gap-3 items-center">
+      <div className="h-16 w-16 rounded-lg overflow-hidden bg-slate-700 shrink-0 border border-white/5">
+        {thumbnail}
+      </div>
+
+      <div className="min-w-0 flex flex-col gap-1">
+        <div className="flex items-center gap-2 flex-wrap min-w-0">
+          {title}
+        </div>
+        {meta && <div className="text-xs text-slate-400">{meta}</div>}
+      </div>
+    </div>
+  );
+}
+```
+
+### src\ui\composer\previews\AttachmentPreviewShell.tsx
+```tsx
+import React from "react";
+
+type AttachmentPreviewShellProps = {
+  children: React.ReactNode;
+  onRemove: () => void;
+  onMoveUp?: () => void;
+  onMoveDown?: () => void;
+  position?: number;
+  total?: number;
+};
+
+export function AttachmentPreviewShell({
+  children,
+  onRemove,
+  onMoveUp,
+  onMoveDown,
+  position,
+  total,
+}: AttachmentPreviewShellProps) {
+  return (
+    <div
+      role="group"
+      tabIndex={0}
+      aria-roledescription="attachment"
+      aria-label={
+        position !== undefined && total !== undefined
+          ? `Attachment ${position + 1} of ${total}`
+          : "Attachment"
+      }
+      onKeyDown={(e) => {
+        if (e.ctrlKey && e.key === "ArrowUp") {
+          e.preventDefault();
+          onMoveUp?.();
+        }
+        if (e.ctrlKey && e.key === "ArrowDown") {
+          e.preventDefault();
+          onMoveDown?.();
+        }
+        if (e.key === "Backspace" || e.key === "Delete") {
+          e.preventDefault();
+          onRemove();
+        }
+      }}
+      className="group grid grid-cols-[28px_minmax(0,1fr)_32px] items-center gap-3 rounded-xl border border-slate-700/50 bg-slate-800/60 px-3 py-3 hover:border-slate-500 focus:outline-none focus:ring-2 focus:ring-primary/60 transition-colors"
+    >
+      <div
+        aria-hidden
+        className="opacity-0 group-hover:opacity-100 transition-opacity text-slate-400 cursor-grab"
+        title="Reorder attachment"
+      >
+        <span className="material-symbols-outlined text-[18px]">
+          drag_indicator
+        </span>
+      </div>
+
+      <div className="min-w-0">{children}</div>
+
+      <button
+        onClick={onRemove}
+        aria-label="Remove attachment"
+        className="justify-self-center rounded-full p-1.5 text-slate-400 hover:text-white hover:bg-white/10 transition-colors"
+      >
+        <span className="material-symbols-outlined text-[18px]">
+          close
+        </span>
+      </button>
+    </div>
+  );
+}
+```
+
+### src\ui\composer\previews\EmbedAttachmentContent.tsx
+```tsx
+import React from "react";
+import type { Attachment } from "@/domain/composer/Attachment";
+import { AttachmentContent } from "./AttachmentContent";
+import { ProviderBadge } from "./ProviderBadge";
+
+export function EmbedAttachmentContent({
+  attachment,
+}: {
+  attachment: Extract<Attachment, { kind: "embed" }>;
+}) {
+  const { canonicalUrl, metadata, source } = attachment;
+
+  return (
+    <AttachmentContent
+      thumbnail={
+        metadata?.thumbnailUrl ? (
+          <img
+            src={metadata.thumbnailUrl}
+            alt={metadata.accessibilityText ?? ""}
+            aria-hidden={!metadata?.accessibilityText}
+            className="h-full w-full object-cover"
+          />
+        ) : (
+          <div className="flex h-full w-full items-center justify-center text-slate-400">
+            <span className="material-symbols-outlined text-2xl">
+              link
+            </span>
+          </div>
+        )
+      }
+      title={
+        <>
+          <span className="truncate text-sm font-medium text-slate-200">
+            {metadata?.title ?? canonicalUrl}
+          </span>
+          {source && (
+            <ProviderBadge
+              label={source}
+              tone={source === "figma" ? "purple" : "blue"}
+            />
+          )}
+        </>
+      }
+      meta={metadata?.description ?? canonicalUrl}
+    />
+  );
+}
+```
+
+### src\ui\composer\previews\FileAttachmentContent.tsx
+```tsx
+import React from "react";
+import type { Attachment } from "@/domain/composer/Attachment";
+import { AttachmentContent } from "./AttachmentContent";
+import { ProviderBadge } from "./ProviderBadge";
+
+export function FileAttachmentContent({
+  attachment,
+}: {
+  attachment: Extract<Attachment, { kind: "file" }>;
+}) {
+  return (
+    <AttachmentContent
+      thumbnail={
+        <div className="flex h-full w-full items-center justify-center text-slate-400">
+          <span className="material-symbols-outlined text-2xl">
+            description
+          </span>
+        </div>
+      }
+      title={
+        <>
+          <span className="truncate text-sm font-medium text-slate-200">
+            {attachment.fileName}
+          </span>
+          <ProviderBadge label="Upload" tone="blue" />
+        </>
+      }
+      meta={`${attachment.size} · ${attachment.mimeType}`}
+    />
+  );
+}
+```
+
+### src\ui\composer\previews\ProviderBadge.tsx
+```tsx
+import React from "react";
+
+type ProviderBadgeProps = {
+  label: string;
+  tone?: "blue" | "purple" | "neutral";
+};
+
+export function ProviderBadge({
+  label,
+  tone = "neutral",
+}: ProviderBadgeProps) {
+  const toneClasses =
+    tone === "blue"
+      ? "bg-blue-500/10 text-blue-400 border-blue-500/20"
+      : tone === "purple"
+      ? "bg-purple-500/10 text-purple-400 border-purple-500/20"
+      : "bg-slate-500/10 text-slate-300 border-slate-500/20";
+
+  return (
+    <span
+      aria-label={`Source: ${label}`}
+      className={`inline-flex items-center gap-1 rounded border px-1.5 py-0.5 text-[10px] font-semibold uppercase tracking-wide ${toneClasses}`}
+    >
+      {label}
+    </span>
+  );
+}
+```

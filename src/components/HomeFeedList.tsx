@@ -11,9 +11,10 @@ interface HomeFeedListProps {
   activeReplyId?: string | null;
   onActiveReplyIdChange?: (id: string | null) => void;
   replyComposer?: any;
+  onRevise?: (item: FeedItemView) => void;
 }
 
-export function HomeFeedList({ items, viewerId, activeReplyId, onActiveReplyIdChange, replyComposer }: HomeFeedListProps) {
+export function HomeFeedList({ items, viewerId, activeReplyId, onActiveReplyIdChange, replyComposer, onRevise }: HomeFeedListProps) {
   if (items.length === 0) {
     // Empty feed is valid data, not an error
     return (
@@ -37,6 +38,7 @@ export function HomeFeedList({ items, viewerId, activeReplyId, onActiveReplyIdCh
           activeReplyId={activeReplyId}
           onActiveReplyIdChange={onActiveReplyIdChange}
           replyComposer={replyComposer}
+          onRevise={onRevise}
         />
       ))}
     </section>

@@ -18,6 +18,7 @@ type HomeFeedContainerProps = {
   activeReplyId?: string | null;
   onActiveReplyIdChange?: (id: string | null) => void;
   replyComposer?: any; // Wrapped composer object
+  onRevise?: (item: FeedItemView) => void;
 };
 
 // Recursive conversion for FeedItem -> FeedItemView
@@ -36,7 +37,8 @@ function toFeedItemView(item: FeedItem): FeedItemView {
 export function HomeFeedContainer(props: HomeFeedContainerProps) {
   const { 
       status, items, viewerId, onRetry, onItemPress, onAuthorPress,
-      activeReplyId, onActiveReplyIdChange, replyComposer
+      activeReplyId, onActiveReplyIdChange, replyComposer,
+      onRevise
   } = props;
 
   switch (status) {
@@ -63,6 +65,7 @@ export function HomeFeedContainer(props: HomeFeedContainerProps) {
           activeReplyId={activeReplyId}
           onActiveReplyIdChange={onActiveReplyIdChange}
           replyComposer={replyComposer}
+          onRevise={onRevise}
         />
       );
 

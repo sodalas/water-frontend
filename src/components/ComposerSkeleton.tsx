@@ -5,6 +5,39 @@ type Composer = ReturnType<typeof useComposer>;
 export function ComposerSkeleton({ composer, autoFocus }: { composer: Composer; autoFocus?: boolean }) {
   return (
     <div style={{ padding: "1rem", borderBottom: "1px solid #333" }}>
+      <div style={{ display: "flex", justifyContent: "space-between", marginBottom: "0.5rem", fontSize: "0.75rem", color: "#888" }}>
+        <div style={{ display: "flex", gap: "1rem" }}>
+          {/* Draft Restored Indicator */}
+          {composer.isRestored && (
+            <span style={{ color: "#4ade80" }}>Draft restored</span>
+          )}
+
+          {/* Revision Context */}
+          {!composer.isRestored && composer.draft.originPublicationId && (
+             <span style={{ color: "#60a5fa" }}>Revising published note</span>
+          )}
+        </div>
+
+        <div style={{ display: "flex", gap: "1rem" }}>
+           {/* Save State (Error hidden per directive) */}
+           {composer.saveStatus === "saving" && <span>Saving...</span>}
+           {composer.saveStatus === "saved" && <span>Saved</span>}
+           
+           {/* Explicit Clear */}
+           <button
+             type="button"
+             onClick={() => {
+                if(window.confirm("This will permanently delete your draft.")) {
+                    composer.clear();
+                }
+             }}
+             style={{ background: "none", border: "none", color: "#ef4444", cursor: "pointer", padding: 0 }}
+           >
+             Clear
+           </button>
+        </div>
+      </div>
+
       <textarea
         autoFocus={autoFocus}
         value={composer.draft.text}

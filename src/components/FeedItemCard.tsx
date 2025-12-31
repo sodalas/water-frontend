@@ -5,15 +5,18 @@ import { ComposerSkeleton } from "./ComposerSkeleton";
 
 export function FeedItemCard({ 
   item, 
+  viewerId,
   activeReplyId, 
   onActiveReplyIdChange, 
-  replyComposer 
+  replyComposer,
+  onRevise
 }: { 
-  item: FeedItemView; 
-  viewerId?: string; // Kept for interface compatibility but maybe unused now unless needed for nested? 
+  item: FeedItemView;
+  viewerId?: string;
   activeReplyId?: string | null;
   onActiveReplyIdChange?: (id: string | null) => void;
   replyComposer?: any;
+  onRevise?: (item: FeedItemView) => void;
 }) {
   const [isExpanded, setIsExpanded] = useState(false);
 
@@ -21,6 +24,9 @@ export function FeedItemCard({
   const isPublishing = replyComposer?.status === 'publishing';
   const isResponse = item.assertionType === 'response';
   const replyCount = item.responses?.length ?? 0;
+  
+  // Author check
+  const isAuthor = viewerId === item.author.id;
   
   const name = item.author.displayName ?? item.author.handle ?? item.author.id;
 
@@ -123,6 +129,16 @@ export function FeedItemCard({
                   className="text-sm text-text-muted hover:text-white transition disabled:opacity-50 disabled:cursor-not-allowed"
                 >
                     {isReplying ? "Cancel" : `Reply${replyCount > 0 ? ` (${replyCount})` : ''}`}
+                </button>
+            )}
+
+            {/* Revise Button (Author Only, Notes Only) */}
+            {isAuthor && !isResponse && onRevise && (
+                <button
+                    onClick={() => onRevise?.(item)}
+                    className="text-sm text-text-muted hover:text-brand-primary transition"
+                >
+                    Revise
                 </button>
             )}
         </footer>
