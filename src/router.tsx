@@ -39,6 +39,10 @@ const loginRoute = createRoute({
   component: Login,
 });
 
+import { ArticleAuthoringPage } from "./pages/ArticleAuthoringPage";
+
+// ... (previous routes)
+
 // App Route (Protected)
 const appRoute = createRoute({
   getParentRoute: () => rootRoute,
@@ -57,6 +61,20 @@ const appRoute = createRoute({
   component: AppHome,
 });
 
+const writeRoute = createRoute({
+  getParentRoute: () => rootRoute,
+  path: "/write",
+  beforeLoad: async ({ context }) => {
+     // Protected route, similar to /app
+    const session = await context.queryClient.ensureQueryData({
+      queryKey: ["session"],
+      queryFn: () => authClient.getSession().then((r) => r.data),
+    });
+    if (!session) throw redirect({ to: "/login" });
+  },
+  component: ArticleAuthoringPage,
+});
+
 const indexRoute = createRoute({
   getParentRoute: () => rootRoute,
   path: "/",
@@ -66,7 +84,7 @@ const indexRoute = createRoute({
 });
 
 // Route Tree
-const routeTree = rootRoute.addChildren([indexRoute, loginRoute, appRoute]);
+const routeTree = rootRoute.addChildren([indexRoute, loginRoute, appRoute, writeRoute]);
 
 // Create Router
 export const router = createRouter({

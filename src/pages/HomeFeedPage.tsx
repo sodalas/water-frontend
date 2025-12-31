@@ -78,11 +78,19 @@ export function HomeFeedPage() {
   const handleRevise = async (item: any) => {
     // We only support revising notes for now (text/media)
     const draft = {
+        title: item.title ?? undefined, // Support title recovery
         text: item.text ?? "",
         media: item.media ?? [],
         originPublicationId: item.assertionId
     };
     await mainComposer.replaceDraft(draft);
+    
+    // Revision Routing:
+    // If it's an ARTICLE (has title or type='article'), redirect to /write
+    if (item.assertionType === 'article' || item.title) {
+        window.location.href = '/write'; // Simple redirect for now, or use router.navigate if available via hook
+        return;
+    }
     
     // Scroll to top to see composer (simple implementation)
     window.scrollTo({ top: 0, behavior: 'smooth' });

@@ -11,6 +11,7 @@ export type MediaItem = {
 };
 
 export type ComposerDraft = {
+  title?: string;
   text: string;
   media: MediaItem[];
   originPublicationId?: string;
@@ -19,6 +20,7 @@ export type ComposerDraft = {
 export type PublishOptions = {
   replyTo?: string;
   clearDraft?: boolean; // opt-in only
+  articleTitle?: string; // If provided, implies assertionType = 'article'
 };
 
 export function useComposer(viewerId: string) {
@@ -59,6 +61,7 @@ export function useComposer(viewerId: string) {
     if (loaded) {
       // Ensure shape integrity when loading potentially partial/old drafts
       setDraft({
+        title: typeof loaded.title === "string" ? loaded.title : undefined,
         text: typeof loaded.text === "string" ? loaded.text : "",
         media: Array.isArray(loaded.media) ? loaded.media : [],
         originPublicationId:
@@ -105,6 +108,16 @@ export function useComposer(viewerId: string) {
     setStatus("idle");
     setError(null);
   }, [viewerId]);
+
+  const setTitle = useCallback(
+    (newTitle: string) => {
+      setDraft((prev) => ({ ...prev, title: newTitle }));
+      setIsRestored(false);
+      setSaveStatus("saving");
+      if (status === "success") setStatus("idle");
+    },
+    [status]
+  );
 
   const setText = useCallback(
     (newText: string) => {
@@ -168,9 +181,19 @@ export function useComposer(viewerId: string) {
 
       try {
         // Construct CSO from draft state (Source of Truth)
+        // Construct CSO from draft state (Source of Truth)
+        // Determine assertion type:
+        let assertionType = "note";
+        if (options?.articleTitle) {
+            assertionType = "article";
+        } else if (options?.replyTo) {
+            assertionType = "response";
+        }
+
         const cso = {
+          title: options?.articleTitle, 
           text: draft.text,
-          assertionType: options?.replyTo ? "response" : "note",
+          assertionType,
           visibility: "public",
           refs: options?.replyTo ? [options.replyTo] : [],
           media: draft.media,
@@ -233,6 +256,7 @@ export function useComposer(viewerId: string) {
 
   return {
     draft,
+    setTitle,
     setText,
     addMedia,
     removeMedia,
