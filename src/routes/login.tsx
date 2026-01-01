@@ -1,5 +1,4 @@
 import { useState } from 'react'
-import { useRouter } from '@tanstack/react-router'
 import { useQueryClient } from '@tanstack/react-query'
 import { authClient } from '../lib/auth-client'
 import { Field } from '../ui/field'
@@ -9,16 +8,15 @@ import { Surface } from '../ui/surface'
 
 export function Login() {
   const [email, setEmail] = useState('')
-  const [password, setPassword] = useState('')
   const [error, setError] = useState('')
-  const router = useRouter()
+  const [success, setSuccess] = useState(false)
   const queryClient = useQueryClient()
 
   const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault()
-    const { error } = await authClient.signIn.email({
+    const { error } = await authClient.signIn.magicLink({
       email,
-      password
+      callbackURL: "/app"
     })
 
     if (error) {
@@ -26,8 +24,22 @@ export function Login() {
       return
     }
 
+    setSuccess(true)
     await queryClient.refetchQueries({ queryKey: ["session"] })
-    await router.navigate({ to: "/app" })
+  }
+
+  if (success) {
+    return (
+      <div className="mx-auto max-w-sm mt-20 text-center">
+        <Surface>
+            <h1 className="text-2xl font-bold mb-4">Check your email</h1>
+            <p className="text-gray-300">
+                We sent a login link to <strong>{email}</strong>.<br/>
+                Click the link to sign in.
+            </p>
+        </Surface>
+      </div>
+    )
   }
 
   return (
@@ -43,21 +55,11 @@ export function Login() {
                 value={email} 
                 onChange={e => setEmail(e.target.value)}
                 className="block w-full rounded-md border-gray-300 shadow-sm border p-2 text-sm"
+                placeholder="you@example.com"
             />
           </Field>
 
-          <Field label="Password" htmlFor="password">
-            <input 
-                id="password"
-                type="password" 
-                name="password" 
-                value={password} 
-                onChange={e => setPassword(e.target.value)}
-                className="block w-full rounded-md border-gray-300 shadow-sm border p-2 text-sm"
-            />
-          </Field>
-
-          <Button type="submit">Sign In</Button>
+          <Button type="submit">Send login link</Button>
         </Form>
       </Surface>
     </div>
