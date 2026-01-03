@@ -16,7 +16,8 @@ export function Login() {
     e.preventDefault()
     const { error } = await authClient.signIn.magicLink({
       email,
-      callbackURL: "/app"
+      // Directive: Absolute URL required to ensure redirect returns to frontend origin
+      callbackURL: `${window.location.origin}/app`
     })
 
     if (error) {
@@ -24,6 +25,8 @@ export function Login() {
       return
     }
 
+    // Invariant: authClient responses indicate request acceptance,
+    // not that a magic link was generated or delivered.
     setSuccess(true)
     await queryClient.refetchQueries({ queryKey: ["session"] })
   }
