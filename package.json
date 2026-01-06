@@ -7,7 +7,8 @@
     "dev": "vite",
     "build": "tsc -b && vite build",
     "lint": "eslint .",
-    "preview": "vite preview"
+    "preview": "vite preview",
+    "check:reading-canon": "bash ./scripts/check-reading-canon.sh"
   },
   "dependencies": {
     "@tanstack/react-query": "^5.90.12",

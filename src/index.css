@@ -1,3 +1,15 @@
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
+
+@media (prefers-color-scheme: dark) {
+  :root {
+    --reading-bg: #0b0f14;
+    --reading-text: #e5e7eb;
+    --reading-muted: #a1a1aa;
+    --reading-faint: #71717a;
+    --reading-border: #1f2937;
+    --reading-link: #e5e7eb;
+    --reading-link-hover: #ffffff;
+  }
+}

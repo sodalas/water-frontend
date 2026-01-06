@@ -40,8 +40,7 @@ const loginRoute = createRoute({
 });
 
 import { ArticleAuthoringPage } from "./pages/ArticleAuthoringPage";
-
-// ... (previous routes)
+import { ArticleReadingPage } from "./pages/ArticleReadingPage";
 
 // App Route (Protected)
 const appRoute = createRoute({
@@ -83,8 +82,16 @@ const indexRoute = createRoute({
   },
 });
 
+// Article Reading Route (PUBLIC - No auth required)
+// 🟥 MUST work without authentication
+const articleRoute = createRoute({
+  getParentRoute: () => rootRoute,
+  path: "/article/$articleId",
+  component: ArticleReadingPage,
+});
+
 // Route Tree
-const routeTree = rootRoute.addChildren([indexRoute, loginRoute, appRoute, writeRoute]);
+const routeTree = rootRoute.addChildren([indexRoute, loginRoute, appRoute, writeRoute, articleRoute]);
 
 // Create Router
 export const router = createRouter({
