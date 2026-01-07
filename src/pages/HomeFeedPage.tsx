@@ -16,7 +16,7 @@ export function HomeFeedPage() {
     return new HomeFeedAdapter();
   }, []);
 
-  const { status, items, error, refresh, prepend, addResponse } = useHomeFeed(adapter, viewerId || ""); 
+  const { status, items, error, refresh, prepend, addResponse } = useHomeFeed(adapter, viewerId || "");
   const mainComposer = useComposer(viewerId || "");
   const replyComposer = useComposer(viewerId || "");
   
