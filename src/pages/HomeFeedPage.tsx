@@ -2,13 +2,10 @@
 import { useMemo, useState } from "react";
 import { HomeFeedAdapter } from "../domain/feed/HomeFeedAdapter";
 import { HomeFeedContainer } from "../components/HomeFeedContainer.tsx";
-import type { FeedItemView } from "../components/feed/types";
 import { useHomeFeed } from "../domain/feed/useHomeFeed";
 import { useComposer } from "../domain/composer/useComposer";
 import { ComposerSkeleton } from "../components/ComposerSkeleton";
 import { authClient } from "../lib/auth-client";
-import { useSearchFilter } from "../domain/feed/useSearchFilter";
-import { SearchInput } from "../components/feed/SearchInput";
 
 export function HomeFeedPage() {
   const { data: session } = authClient.useSession();
@@ -20,17 +17,7 @@ export function HomeFeedPage() {
   }, []);
 
   const { status, items, error, refresh, prepend, addResponse } = useHomeFeed(adapter, viewerId || "");
-  const { searchTerm, handleSearchChange } = useSearchFilter();
   const mainComposer = useComposer(viewerId || "");
-
-  const filteredItems = useMemo(() => {
-    if (!searchTerm) {
-      return items;
-    }
-    return items.filter((item) =>
-      item.text?.toLowerCase().includes(searchTerm.toLowerCase())
-    );
-  }, [items, searchTerm]);
   const replyComposer = useComposer(viewerId || "");
   
   const [activeReplyId, setActiveReplyId] = useState<string | null>(null);
@@ -88,7 +75,7 @@ export function HomeFeedPage() {
   };
 
   // Revise Flow: Fork publication into draft
-  const handleRevise = async (item: FeedItemView) => {
+  const handleRevise = async (item: any) => {
     // We only support revising notes for now (text/media)
     const draft = {
         title: item.title ?? undefined, // Support title recovery
@@ -119,11 +106,9 @@ export function HomeFeedPage() {
         Refresh
       </button>
 
-      <SearchInput searchTerm={searchTerm} onSearchChange={handleSearchChange} />
-
       <HomeFeedContainer
         status={status}
-        items={filteredItems}
+        items={items}
         viewerId={viewerId || undefined}
         error={error}
         onRetry={refresh}
