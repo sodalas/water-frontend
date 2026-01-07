@@ -39,7 +39,7 @@ const loginRoute = createRoute({
   component: Login,
 });
 
-import { ArticleAuthoringPage } from "./pages/ArticleAuthoringPage";
+import { ArticleWritePage } from "./pages/ArticleWritePage";
 import { ArticleReadingPage } from "./pages/ArticleReadingPage";
 
 // App Route (Protected)
@@ -71,7 +71,7 @@ const writeRoute = createRoute({
     });
     if (!session) throw redirect({ to: "/login" });
   },
-  component: ArticleAuthoringPage,
+  component: ArticleWritePage,
 });
 
 const indexRoute = createRoute({
