@@ -3,20 +3,18 @@ import { useState } from "react";
 import type { FeedItemView } from "./feed/types";
 import { ComposerSkeleton } from "./ComposerSkeleton";
 
-export function FeedItemCard({ 
-  item, 
+export function FeedItemCard({
+  item,
   viewerId,
-  activeReplyId, 
-  onActiveReplyIdChange, 
-  replyComposer,
-  onRevise
-}: { 
+  activeReplyId,
+  onActiveReplyIdChange,
+  replyComposer
+}: {
   item: FeedItemView;
   viewerId?: string;
   activeReplyId?: string | null;
   onActiveReplyIdChange?: (id: string | null) => void;
   replyComposer?: any;
-  onRevise?: (item: FeedItemView) => void;
 }) {
   const [isExpanded, setIsExpanded] = useState(false);
 
@@ -123,22 +121,12 @@ export function FeedItemCard({
         {/* Footer actions */}
         <footer className="mt-4 flex items-center gap-4">
             {!isResponse && onActiveReplyIdChange && (
-                <button 
+                <button
                   onClick={() => onActiveReplyIdChange(isReplying ? null : item.assertionId)}
                   disabled={isPublishing}
                   className="text-sm text-text-muted hover:text-white transition disabled:opacity-50 disabled:cursor-not-allowed"
                 >
                     {isReplying ? "Cancel" : `Reply${replyCount > 0 ? ` (${replyCount})` : ''}`}
-                </button>
-            )}
-
-            {/* Revise Button (Author Only, Notes Only) */}
-            {isAuthor && !isResponse && onRevise && (
-                <button
-                    onClick={() => onRevise?.(item)}
-                    className="text-sm text-text-muted hover:text-brand-primary transition"
-                >
-                    Revise
                 </button>
             )}
         </footer>

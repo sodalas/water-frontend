@@ -27,10 +27,7 @@ export function HomeFeedPage() {
     return {
       ...mainComposer,
       publish: async () => {
-        // Opt-in to "tweet" behavior: clear draft after publish ONLY if not revising
-        // If revising, we retain the draft to allow for further edits loop.
-        const isRevising = !!mainComposer.draft.originPublicationId;
-        const item = await mainComposer.publish(session?.user, { clearDraft: !isRevising });
+        const item = await mainComposer.publish(session?.user, { clearDraft: true });
         if (item) {
           prepend(item);
         }
@@ -72,30 +69,6 @@ export function HomeFeedPage() {
     console.log("Navigate to author:", authorId);
   };
 
-  // Revise Flow: Fork publication into draft
-  const handleRevise = async (item: any) => {
-    // We only support revising notes for now (text/media)
-    const draft = {
-        title: item.title ?? undefined, // Support title recovery
-        text: item.text ?? "",
-        media: item.media ?? [],
-        originPublicationId: item.assertionId
-    };
-    await mainComposer.replaceDraft(draft);
-    
-    // Revision Routing:
-    // If it's an ARTICLE (has title or type='article'), redirect to /write
-    if (item.assertionType === 'article' || item.title) {
-        window.location.href = '/write'; // Simple redirect for now, or use router.navigate if available via hook
-        return;
-    }
-    
-    // Scroll to top to see composer (simple implementation)
-    window.scrollTo({ top: 0, behavior: 'smooth' });
-    
-    // Focus logic would ideally go here if we exposed a ref
-  };
-
   return (
     <main aria-label="Home feed page">
       <ComposerSkeleton composer={wrappedMainComposer} />
@@ -115,7 +88,6 @@ export function HomeFeedPage() {
         activeReplyId={activeReplyId}
         onActiveReplyIdChange={setActiveReplyId}
         replyComposer={wrappedReplyComposer}
-        onRevise={handleRevise}
       />
     </main>
   );

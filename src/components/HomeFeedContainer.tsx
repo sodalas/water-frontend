@@ -49,7 +49,6 @@ type HomeFeedContainerProps = {
   activeReplyId?: string | null;
   onActiveReplyIdChange?: (id: string | null) => void;
   replyComposer?: ComposerHandle;
-  onRevise?: (item: FeedItemView) => void;
 };
 
 // Recursive conversion for FeedItem -> FeedItemView
@@ -66,38 +65,38 @@ function toFeedItemView(item: FeedItem): FeedItemView {
 }
 
 export function HomeFeedContainer(props: HomeFeedContainerProps) {
-  const { 
-      status, items, viewerId, onRetry, onItemPress, onAuthorPress,
-      activeReplyId, onActiveReplyIdChange, replyComposer,
-      onRevise
+  const {
+    status,
+    items,
+    viewerId,
+    onRetry,
+    onItemPress,
+    onAuthorPress,
+    activeReplyId,
+    onActiveReplyIdChange,
+    replyComposer,
   } = props;
 
-  switch (status) {
-    // 🟥 FEED INITIAL FETCH DIRECTIVE Follow-up:
-    // "idle" is now a transient state (feed auto-loads on mount)
-    // Show loading skeleton for both idle and loading states
-    case "idle":
-    case "loading":
-      return <FeedSkeletonList />;
-
-    case "error":
-      return <FeedErrorState onRetry={onRetry} />;
-
-    case "ready":
-      return (
-        <HomeFeedList
-          items={items.map(toFeedItemView)}
-          viewerId={viewerId}
-          onItemPress={onItemPress}
-          onAuthorPress={onAuthorPress}
-          activeReplyId={activeReplyId}
-          onActiveReplyIdChange={onActiveReplyIdChange}
-          replyComposer={replyComposer}
-          onRevise={onRevise}
-        />
-      );
-
-    default:
-      return null;
+  // 🟥 Feed auto-load invariant:
+  // "idle" is transient and rendered as loading
+  if (status === "idle" || status === "loading") {
+    return <FeedSkeletonList />;
   }
+
+  if (status === "error") {
+    return <FeedErrorState onRetry={onRetry} />;
+  }
+
+  // status === "ready"
+  return (
+    <HomeFeedList
+      items={items.map(toFeedItemView)}
+      viewerId={viewerId}
+      onItemPress={onItemPress}
+      onAuthorPress={onAuthorPress}
+      activeReplyId={activeReplyId}
+      onActiveReplyIdChange={onActiveReplyIdChange}
+      replyComposer={replyComposer}
+    />
+  );
 }
