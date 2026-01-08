@@ -1,33 +1,112 @@
-// import { useMemo } from "react";
-import { useComposer } from "../domain/composer/useComposer";
-import { authClient } from "../lib/auth-client";
-import { ArticleComposer } from "../components/ArticleComposer";
+/**
+ * ArticleAuthoringPage.tsx
+ *
+ * 🟥 MINIMAL ARTICLE AUTHORING UI
+ *
+ * Phase 2 Prime Invariant:
+ * /write produces canonical articles by calling POST /api/articles/publish
+ * and then gets out of the way.
+ *
+ * No drafts.
+ * No preview.
+ * No persistence on the client.
+ * No editor gravity.
+ *
+ * The harness has one responsibility:
+ * - Collect input
+ * - Submit once
+ * - Redirect
+ *
+ * 🟥 Things explicitly forbidden:
+ * - Markdown preview
+ * - Editor toolbar
+ * - Autosave
+ * - "Draft saved" messaging
+ * - Debounce logic
+ * - Optimistic UI
+ * - Client-side validation beyond required fields
+ * - localStorage / IndexedDB
+ * - Feature flags
+ */
+
+import { useState } from "react";
+import { useNavigate } from "@tanstack/react-router";
+import { useQueryClient } from "@tanstack/react-query";
+import { Surface } from "../ui/surface";
+import { Stack } from "../ui/stack";
+import { Field } from "../ui/field";
+import { Button } from "../ui/button";
 
 export function ArticleAuthoringPage() {
-  const { data: session } = authClient.useSession();
-  const viewerId = session?.user.id ?? null;
+  const navigate = useNavigate();
+  const queryClient = useQueryClient();
+  const [title, setTitle] = useState("");
+  const [markdown, setMarkdown] = useState("");
+  const [isSubmitting, setIsSubmitting] = useState(false);
+  const [error, setError] = useState<string | null>(null);
 
-  // Use the shared composer hook. 
-  // Draft scoping: "Single draft slot per user".
-  // So this loads the same draft as Home. 
-  // If user switches context, they see the same content (which satisfies "Memory").
-  const composer = useComposer(viewerId || "");
+  async function publish() {
+    // Guard against double-submit
+    if (isSubmitting) return;
 
-  // Wrap publish to ensure it knows it's an article
-  // const wrappedComposer = useMemo(() => {
-  //     // We don't strictly *need* to wrap since ArticleComposer calls publish with { articleTitle: ... }
-  //     // But we can ensure clearDraft defaults if we want.
-  //     return {
-  //         ...composer,
-  //         // We can just pass composer down directly if ArticleComposer handles the args
-  //     };
-  // }, [composer]);
+    setIsSubmitting(true);
+    setError(null);
 
-  if (!viewerId) return null; // Or redirect/loading
+    try {
+      const res = await fetch("/api/articles/publish", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        credentials: "include",
+        body: JSON.stringify({ title, markdown }),
+      });
+
+      if (!res.ok) {
+        const payload = await res.json().catch(() => ({}));
+        throw new Error(payload.message || "Publish failed");
+      }
+
+      const { id } = await res.json();
+
+      // 🟥 Nudge projections to refresh
+      await queryClient.invalidateQueries({ queryKey: ["home-feed"] });
+
+      // 🟥 Immediately hand control to Reading
+      // Reading is the preview.
+      navigate({ to: `/article/${id}` });
+    } catch (e: unknown) {
+      setError(e instanceof Error ? e.message : "Publish failed");
+      setIsSubmitting(false);
+    }
+  }
 
   return (
-    <div className="min-h-screen bg-bg-canvas text-text-primary">
-      <ArticleComposer composer={composer} />
-    </div>
+    <Surface>
+      <Stack gap="lg">
+        <Field label="Title">
+          <input
+            value={title}
+            onChange={(e) => setTitle(e.target.value)}
+            placeholder="Article title"
+            disabled={isSubmitting}
+          />
+        </Field>
+
+        <Field label="Body">
+          <textarea
+            rows={18}
+            value={markdown}
+            onChange={(e) => setMarkdown(e.target.value)}
+            placeholder="Write in Markdown prose…"
+            disabled={isSubmitting}
+          />
+        </Field>
+
+        {error && <div className="text-red-600">{error}</div>}
+
+        <Button onClick={publish} disabled={isSubmitting}>
+          {isSubmitting ? "Publishing…" : "Publish"}
+        </Button>
+      </Stack>
+    </Surface>
   );
 }

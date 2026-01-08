@@ -5,11 +5,6 @@ import type { HomeFeedAdapter, FeedSnapshot } from "./HomeFeedAdapter";
 export function useHomeFeed(adapter: HomeFeedAdapter, viewerId: string) {
   const [snapshot, setSnapshot] = useState<FeedSnapshot>(adapter.getSnapshot());
 
-  // Reset to idle if viewer changes (Safety)
-  useEffect(() => {
-    setSnapshot(adapter.idle());
-  }, [adapter, viewerId]);
-
   const load = useCallback(async () => {
     if (!viewerId) return;
 
@@ -20,6 +15,15 @@ export function useHomeFeed(adapter: HomeFeedAdapter, viewerId: string) {
     const result = await adapter.fetch(viewerId);
     setSnapshot(result);
   }, [adapter, viewerId]);
+
+  // 🟥 FEED INITIAL FETCH DIRECTIVE
+  // Visiting the feed route MUST trigger an initial fetch
+  // Manual refresh is allowed as a retry mechanism, not as a prerequisite
+  useEffect(() => {
+    if (viewerId) {
+      load();
+    }
+  }, [load, viewerId]);
 
   // Explicit Transition: Load More
   const loadMore = useCallback(async () => {

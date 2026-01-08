@@ -57,10 +57,8 @@ export function HomeFeedPage() {
     };
   }, [replyComposer, activeReplyId, addResponse, session?.user]);
 
-  // Initial Load handled internally by useComposer now.
-  // useEffect(() => {
-  //   if (viewerId) load();
-  // }, [load, viewerId]);
+  // 🟥 Initial Load now handled automatically by useHomeFeed hook
+  // (See FEED INITIAL FETCH DIRECTIVE in useHomeFeed.ts)
 
   const handleRefresh = () => {
     refresh();

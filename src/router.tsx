@@ -39,7 +39,7 @@ const loginRoute = createRoute({
   component: Login,
 });
 
-import { ArticleWritePage } from "./pages/ArticleWritePage";
+import { ArticleAuthoringPage } from "./pages/ArticleAuthoringPage";
 import { ArticleReadingPage } from "./pages/ArticleReadingPage";
 
 // App Route (Protected)
@@ -60,18 +60,19 @@ const appRoute = createRoute({
   component: AppHome,
 });
 
+// 🟥 Article Authoring Route (Protected)
+// No nested routes, no loaders beyond auth, no search params, no draft IDs
 const writeRoute = createRoute({
   getParentRoute: () => rootRoute,
   path: "/write",
   beforeLoad: async ({ context }) => {
-     // Protected route, similar to /app
     const session = await context.queryClient.ensureQueryData({
       queryKey: ["session"],
       queryFn: () => authClient.getSession().then((r) => r.data),
     });
     if (!session) throw redirect({ to: "/login" });
   },
-  component: ArticleWritePage,
+  component: ArticleAuthoringPage,
 });
 
 const indexRoute = createRoute({

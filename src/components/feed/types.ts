@@ -1,4 +1,16 @@
-// src/components/feed/types.ts
+/**
+ * src/components/feed/types.ts
+ * * STRICT FEED VIEW TYPES (🟥 NO ANY)
+ */
+
+export interface MediaItem {
+  id: string;
+  type: "image" | "link";
+  src: string;
+  title?: string;   // Required for accessible image alts and link previews [cite: 410]
+  domain?: string;  // Required for link attribution [cite: 411]
+}
+
 export interface FeedItemView {
   assertionId: string;
   assertionType: string;
@@ -10,6 +22,6 @@ export interface FeedItemView {
   };
   createdAt: string;
   text: string;
-  media?: any[];
+  media?: MediaItem[];
   responses?: FeedItemView[];
 }

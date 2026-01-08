@@ -19,7 +19,8 @@
  * - Place inside ArticleBody
  */
 
-import { useState, useEffect } from "react";
+import { useState } from "react";
+import { authClient } from "../../lib/auth-client";
 
 interface PostArticleCTAProps {
   /**
@@ -33,16 +34,12 @@ interface PostArticleCTAProps {
 }
 
 export function PostArticleCTA({ context }: PostArticleCTAProps) {
-  const [isAuthenticated, setIsAuthenticated] = useState(false);
-  const [isDismissed, setIsDismissed] = useState(false);
+  // 🟥 HIGH PRIORITY FIX: Use existing auth hook instead of duplicating fetch logic
+  // Textbook: "useEffect allows for cleanup operations... by returning a cleanup function"
+  const { data: session } = authClient.useSession();
+  const isAuthenticated = !!session?.user;
 
-  useEffect(() => {
-    // Check auth state (read-only, no side effects)
-    fetch("/api/auth/get-session", { credentials: "include" })
-      .then((r) => (r.ok ? r.json() : null))
-      .then((data) => setIsAuthenticated(!!data?.user))
-      .catch(() => setIsAuthenticated(false));
-  }, []);
+  const [isDismissed, setIsDismissed] = useState(false);
 
   if (isDismissed) {
     return null;

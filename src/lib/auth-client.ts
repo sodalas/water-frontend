@@ -1,8 +1,5 @@
 // src/lib/auth-client.ts
-import {
-  createAuthClient as createBetterAuthClient,
-  type AuthClient,
-} from "better-auth/react";
+import { createAuthClient as createBetterAuthClient } from "better-auth/react";
 import { magicLinkClient } from "better-auth/client/plugins";
 
 /**
@@ -15,7 +12,7 @@ import { magicLinkClient } from "better-auth/client/plugins";
  * @param config - The configuration for the auth client, including the baseURL.
  * @returns An instance of the auth client.
  */
-export function createAuthClient(config: { baseURL: string }): AuthClient {
+export function createAuthClient(config: { baseURL: string }) {
   return createBetterAuthClient({
     baseURL: config.baseURL,
     fetchOptions: {
