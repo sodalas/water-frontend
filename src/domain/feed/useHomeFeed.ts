@@ -3,16 +3,20 @@ import { useState, useEffect, useCallback } from "react";
 import type { HomeFeedAdapter, FeedSnapshot } from "./HomeFeedAdapter";
 
 export function useHomeFeed(adapter: HomeFeedAdapter, viewerId: string) {
-  const [snapshot, setSnapshot] = useState<FeedSnapshot>(adapter.getSnapshot());
+  const [snapshot, setSnapshot] = useState<FeedSnapshot>(adapter.idle());
 
   const load = useCallback(async () => {
     if (!viewerId) return;
 
-    // Explicit Transition: Loading
-    setSnapshot(adapter.loading());
+    // Capture current snapshot for consistent state throughout async operation
+    let capturedSnapshot: FeedSnapshot;
+    setSnapshot(current => {
+      capturedSnapshot = current;
+      return adapter.loading(current);
+    });
 
-    // Delegate transitions to adapter
-    const result = await adapter.fetch(viewerId);
+    // Delegate transitions to adapter using captured snapshot
+    const result = await adapter.fetch(capturedSnapshot!, viewerId);
     setSnapshot(result);
   }, [adapter, viewerId]);
 
@@ -27,12 +31,19 @@ export function useHomeFeed(adapter: HomeFeedAdapter, viewerId: string) {
 
   // Explicit Transition: Load More
   const loadMore = useCallback(async () => {
-    if (!viewerId || !snapshot.nextCursor || snapshot.status === "loading") return;
+    // Capture current snapshot for guard checks and consistent state
+    let capturedSnapshot: FeedSnapshot;
+    setSnapshot(current => {
+      capturedSnapshot = current;
+      return current;
+    });
+
+    if (!viewerId || !capturedSnapshot!.nextCursor || capturedSnapshot!.status === "loading") return;
 
     // Delegate transitions to adapter (it handles appending)
-    const result = await adapter.fetch(viewerId, snapshot.nextCursor);
+    const result = await adapter.fetch(capturedSnapshot!, viewerId, capturedSnapshot!.nextCursor);
     setSnapshot(result);
-  }, [adapter, viewerId, snapshot.nextCursor, snapshot.status]);
+  }, [adapter, viewerId]);
 
   // Prepend Logic for Optimistic Updates
   const prepend = useCallback((item: any) => { // Using any broadly here, but should match FeedItem

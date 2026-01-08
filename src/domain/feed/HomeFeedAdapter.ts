@@ -28,29 +28,33 @@ export interface FeedSnapshot {
 
 /**
  * Platform-Agnostic Adapter for the Home Feed.
- * Encapsulates state definitions, transition logic, and data fetching.
  *
+ * 🟥 P2.1 PURE ADAPTER DIRECTIVE
+ * - NO internal state (no this.snapshot)
+ * - NO mutation (all methods return NEW snapshots)
+ * - React hook owns the snapshot via useState
+ * - Adapter computes next state from current state
  */
-
 export class HomeFeedAdapter {
-  private snapshot: FeedSnapshot = this.idle();
-
   idle(): FeedSnapshot {
     return { status: "idle", data: null, error: null, nextCursor: null };
   }
 
-  loading(existingData: FeedItem[] | null = null): FeedSnapshot {
-    return { status: "loading", data: existingData, error: null, nextCursor: this.snapshot.nextCursor };
+  loading(snapshot: FeedSnapshot, cursor: string | null = null): FeedSnapshot {
+    // Keep existing data if paging, clear if initial load
+    return {
+      status: "loading",
+      data: cursor ? snapshot.data : null,
+      error: null,
+      nextCursor: snapshot.nextCursor,
+    };
   }
 
-  getSnapshot(): FeedSnapshot {
-    return this.snapshot;
-  }
-
-  async fetch(viewerId: string, cursor: string | null = null): Promise<FeedSnapshot> {
-    // Keep existing data if paging
-    this.snapshot = this.loading(cursor ? this.snapshot.data : null);
-
+  async fetch(
+    snapshot: FeedSnapshot,
+    viewerId: string,
+    cursor: string | null = null
+  ): Promise<FeedSnapshot> {
     try {
       console.debug(`[HomeFeedAdapter] Fetching for ${viewerId}, cursor: ${cursor}`);
 
@@ -65,30 +69,23 @@ export class HomeFeedAdapter {
       const { items, nextCursor } = await response.json();
 
       // If paging, append. If first load, replace.
-      const newData = cursor && this.snapshot.data 
-        ? [...this.snapshot.data, ...items] 
+      const newData = cursor && snapshot.data
+        ? [...snapshot.data, ...items]
         : items;
 
-      this.snapshot = {
+      return {
         status: "ready",
         data: newData,
         error: null,
-        nextCursor
+        nextCursor,
       };
     } catch (error) {
-      this.snapshot = {
+      return {
         status: "error",
-        data: this.snapshot.data, // Keep old data on error
-        error:
-          error instanceof Error ? error : new Error("Unknown Adapter Error"),
-        nextCursor: this.snapshot.nextCursor
+        data: snapshot.data, // Keep old data on error
+        error: error instanceof Error ? error : new Error("Unknown Adapter Error"),
+        nextCursor: snapshot.nextCursor,
       };
     }
-
-    return this.snapshot;
-  }
-
-  async refresh(viewerId: string) {
-    return this.fetch(viewerId, null);
   }
 }

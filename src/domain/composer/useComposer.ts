@@ -20,13 +20,22 @@ export type PublishOptions = {
   articleTitle?: string;
 };
 
-// 🟥 CRITICAL FIX: Unified state eliminates impossible state combinations
-// Textbook: "Move states that belong together from multiple useState into a single useReducer"
-type ComposerState =
-  | { status: "idle"; draft: ComposerDraft; error: null; saveStatus: "idle" | "saving" | "saved" | "error"; isRestored: boolean }
-  | { status: "publishing"; draft: ComposerDraft; error: null; saveStatus: "idle" | "saving" | "saved" | "error"; isRestored: boolean }
-  | { status: "success"; draft: ComposerDraft; error: null; saveStatus: "idle" | "saving" | "saved" | "error"; isRestored: boolean }
-  | { status: "error"; draft: ComposerDraft; error: string; saveStatus: "idle" | "saving" | "saved" | "error"; isRestored: boolean };
+// 🟥 P1 COMPLIANT: Preserve orthogonal axes, eliminate impossible states
+// Phase = publication lifecycle (idle/editing/publishing)
+// Save = persistence status (orthogonal axis)
+// Draft = content (orthogonal axis)
+type ComposerState = {
+  phase: "idle" | "editing" | "publishing";
+  draft: ComposerDraft;
+  save: {
+    status: "idle" | "saving" | "saved" | "error";
+  };
+  publish?: {
+    lastPublishedId?: string;
+    error?: string;
+  };
+  isRestored: boolean;
+};
 
 type ComposerAction =
   | { type: "LOAD_DRAFT"; draft: ComposerDraft; hasContent: boolean }
@@ -37,48 +46,52 @@ type ComposerAction =
   | { type: "REPLACE_DRAFT"; draft: ComposerDraft }
   | { type: "CLEAR_DRAFT" }
   | { type: "PUBLISH_START" }
-  | { type: "PUBLISH_SUCCESS" }
+  | { type: "PUBLISH_SUCCESS"; publishedId?: string }
   | { type: "PUBLISH_ERROR"; error: string }
-  | { type: "SAVE_STATUS"; status: "idle" | "saving" | "saved" | "error" };
+  | { type: "SAVE_START" }
+  | { type: "SAVE_SUCCESS" }
+  | { type: "SAVE_ERROR" };
 
+// 🟥 Reducer = State Math Only (no side effects, no async, no business logic)
 function composerReducer(state: ComposerState, action: ComposerAction): ComposerState {
   switch (action.type) {
     case "LOAD_DRAFT":
       return {
         ...state,
-        status: "idle",
+        phase: "idle",
         draft: action.draft,
-        error: null,
+        publish: undefined,
         isRestored: action.hasContent,
       };
 
     case "SET_TITLE":
       return {
         ...state,
-        status: state.status === "success" ? "idle" : state.status,
+        phase: "editing",
         draft: { ...state.draft, title: action.title },
         isRestored: false,
-        saveStatus: "saving",
+        save: { status: "saving" },
       };
 
     case "SET_TEXT":
       return {
         ...state,
-        status: state.status === "success" ? "idle" : state.status,
+        phase: "editing",
         draft: { ...state.draft, text: action.text },
         isRestored: false,
-        saveStatus: "saving",
+        save: { status: "saving" },
       };
 
     case "ADD_MEDIA":
       return {
         ...state,
+        phase: "editing",
         draft: {
           ...state.draft,
           media: [...state.draft.media, action.item],
         },
         isRestored: false,
-        saveStatus: "saving",
+        save: { status: "saving" },
       };
 
     case "REMOVE_MEDIA":
@@ -98,46 +111,52 @@ function composerReducer(state: ComposerState, action: ComposerAction): Composer
 
     case "CLEAR_DRAFT":
       return {
-        status: "idle",
+        phase: "idle",
         draft: { text: "", media: [] },
-        error: null,
-        saveStatus: "idle",
+        save: { status: "idle" },
+        publish: undefined,
         isRestored: false,
       };
 
     case "PUBLISH_START":
-      // Only valid transition from idle/error/success
-      if (state.status === "publishing") return state;
       return {
         ...state,
-        status: "publishing",
-        error: null,
+        phase: "publishing",
+        publish: undefined, // Clear previous publish state
       };
 
     case "PUBLISH_SUCCESS":
-      // Only valid transition from publishing
-      if (state.status !== "publishing") return state;
       return {
-        status: "success",
-        draft: { text: "", media: [] }, // Clear draft on success
-        error: null,
-        saveStatus: "idle",
+        phase: "idle",
+        draft: { text: "", media: [] },
+        save: { status: "idle" },
+        publish: { lastPublishedId: action.publishedId },
         isRestored: false,
       };
 
     case "PUBLISH_ERROR":
-      // Only valid transition from publishing
-      if (state.status !== "publishing") return state;
       return {
         ...state,
-        status: "error",
-        error: action.error,
+        phase: "idle",
+        publish: { error: action.error },
       };
 
-    case "SAVE_STATUS":
+    case "SAVE_START":
       return {
         ...state,
-        saveStatus: action.status,
+        save: { status: "saving" },
+      };
+
+    case "SAVE_SUCCESS":
+      return {
+        ...state,
+        save: { status: "saved" },
+      };
+
+    case "SAVE_ERROR":
+      return {
+        ...state,
+        save: { status: "error" },
       };
 
     default:
@@ -146,10 +165,10 @@ function composerReducer(state: ComposerState, action: ComposerAction): Composer
 }
 
 const initialState: ComposerState = {
-  status: "idle",
+  phase: "idle",
   draft: { text: "", media: [] },
-  error: null,
-  saveStatus: "idle",
+  save: { status: "idle" },
+  publish: undefined,
   isRestored: false,
 };
 
@@ -157,14 +176,15 @@ export function useComposer(viewerId: string) {
   const hasLoadedRef = useRef(false);
   const [state, dispatch] = useReducer(composerReducer, initialState);
 
-  // Persistence helpers
+  // Persistence helpers (async logic lives here, not in reducer)
   const save = useCallback(async () => {
     if (!viewerId) return;
+    dispatch({ type: "SAVE_START" });
     try {
       await Draft.save(viewerId, state.draft);
-      dispatch({ type: "SAVE_STATUS", status: "saved" });
+      dispatch({ type: "SAVE_SUCCESS" });
     } catch (e) {
-      dispatch({ type: "SAVE_STATUS", status: "error" });
+      dispatch({ type: "SAVE_ERROR" });
     }
   }, [viewerId, state.draft]);
 
@@ -290,7 +310,7 @@ export function useComposer(viewerId: string) {
 
         const { assertionId, createdAt } = await response.json();
 
-        dispatch({ type: "PUBLISH_SUCCESS" });
+        dispatch({ type: "PUBLISH_SUCCESS", publishedId: assertionId });
 
         // Return FeedItem for optimistic updates
         if (viewerId && viewer) {
@@ -321,11 +341,18 @@ export function useComposer(viewerId: string) {
     [state.draft, viewerId]
   );
 
+  // 🟥 Map internal state to external API (one-to-one with old behavior)
   return {
     draft: state.draft,
-    status: state.status,
-    error: state.error,
-    saveStatus: state.saveStatus,
+    // Map phase to legacy status for backward compatibility
+    status: ((): "idle" | "publishing" | "error" | "success" => {
+      if (state.phase === "publishing") return "publishing";
+      if (state.publish?.error) return "error";
+      if (state.publish?.lastPublishedId) return "success";
+      return "idle";
+    })(),
+    error: state.publish?.error ?? null,
+    saveStatus: state.save.status,
     isRestored: state.isRestored,
     setTitle,
     setText,
