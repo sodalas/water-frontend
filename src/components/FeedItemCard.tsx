@@ -2,19 +2,28 @@
 import { useState } from "react";
 import type { FeedItemView } from "./feed/types";
 import { ComposerSkeleton } from "./ComposerSkeleton";
+import { PostActionMenu } from "./PostActionMenu";
+import type { UserRole } from "../domain/permissions/UserRole";
+import { canEdit, canDelete } from "../domain/permissions/UserRole";
 
 export function FeedItemCard({
   item,
   viewerId,
+  viewerRole,
   activeReplyId,
   onActiveReplyIdChange,
-  replyComposer
+  replyComposer,
+  onEdit,
+  onDelete
 }: {
   item: FeedItemView;
   viewerId?: string;
+  viewerRole: UserRole;
   activeReplyId?: string | null;
   onActiveReplyIdChange?: (id: string | null) => void;
   replyComposer?: any;
+  onEdit?: (assertionId: string) => void;
+  onDelete?: (assertionId: string) => void;
 }) {
   const [isExpanded, setIsExpanded] = useState(false);
 
@@ -22,9 +31,10 @@ export function FeedItemCard({
   const isPublishing = replyComposer?.status === 'publishing';
   const isResponse = item.assertionType === 'response';
   const replyCount = item.responses?.length ?? 0;
-  
-  // Author check
-  const isAuthor = viewerId === item.author.id;
+
+  // Phase C: Permission checks for Edit/Delete visibility
+  const canEditPost = canEdit(viewerId, item.author.id, viewerRole);
+  const canDeletePost = canDelete(viewerId, item.author.id, viewerRole);
   
   const name = item.author.displayName ?? item.author.handle ?? item.author.id;
 
@@ -60,6 +70,16 @@ export function FeedItemCard({
           <time className="text-sm text-text-muted whitespace-nowrap">
             {item.createdAt}
           </time>
+
+          {/* Phase C: Action menu (Edit/Delete) */}
+          <div className="ml-auto">
+            <PostActionMenu
+              canEdit={canEditPost}
+              canDelete={canDeletePost}
+              onEdit={() => onEdit?.(item.assertionId)}
+              onDelete={() => onDelete?.(item.assertionId)}
+            />
+          </div>
         </header>
 
         {/* Text */}
@@ -156,12 +176,16 @@ export function FeedItemCard({
                            Hide replies
                        </button>
                        {item.responses.map(response => (
-                        <FeedItemCard 
-                          key={response.assertionId} 
-                          item={response} 
+                        <FeedItemCard
+                          key={response.assertionId}
+                          item={response}
+                          viewerId={viewerId}
+                          viewerRole={viewerRole}
                           activeReplyId={activeReplyId}
                           onActiveReplyIdChange={onActiveReplyIdChange}
                           replyComposer={replyComposer}
+                          onEdit={onEdit}
+                          onDelete={onDelete}
                         />
                        ))}
                    </div>

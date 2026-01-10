@@ -32,8 +32,20 @@ import { useComposer } from "../domain/composer/useComposer";
 import { authClient } from "../lib/auth-client";
 
 export function ArticleWritePage() {
-  const { data: session } = authClient.useSession();
-  const viewerId = session?.user.id ?? "";
+  const { data: session, isLoading, isPending } = authClient.useSession();
+
+  // Invariant 1: Auth presence on protected route
+  // Wait for session to load (route guard ensures it exists)
+  if (isLoading || isPending || !session) {
+    return <div>Loading...</div>;
+  }
+
+  const viewerId = session.user.id;
+
+  if (!viewerId) {
+    throw new Error("Invariant violation: authenticated route without viewerId");
+  }
+
   const composer = useComposer(viewerId);
   const navigate = useNavigate();
 
@@ -77,10 +89,6 @@ export function ArticleWritePage() {
       alert(error instanceof Error ? error.message : "Failed to publish article");
     }
   }, [composer, navigate]);
-
-  if (!viewerId) {
-    return null;
-  }
 
   return (
     <main className="mx-auto max-w-2xl px-6 py-12">

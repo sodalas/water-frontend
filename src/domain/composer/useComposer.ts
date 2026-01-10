@@ -18,6 +18,7 @@ export type PublishOptions = {
   replyTo?: string;
   clearDraft?: boolean;
   articleTitle?: string;
+  supersedesId?: string; // Phase B3.4-B: For revisions
 };
 
 // 🟥 P1 COMPLIANT: Preserve orthogonal axes, eliminate impossible states
@@ -208,6 +209,11 @@ export function useComposer(viewerId: string) {
     }
   }, [viewerId]);
 
+  // Invariant 5: Reset identity-scoped refs when viewerId changes
+  useEffect(() => {
+    hasLoadedRef.current = false;
+  }, [viewerId]);
+
   // Structural Recovery: Auto-load on viewer availability
   useEffect(() => {
     if (!viewerId) return;
@@ -301,6 +307,7 @@ export function useComposer(viewerId: string) {
           body: JSON.stringify({
             cso,
             clearDraft: options?.clearDraft,
+            supersedesId: options?.supersedesId, // Phase B3.4-B: Revision support
           }),
         });
 

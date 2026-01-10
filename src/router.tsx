@@ -29,6 +29,9 @@ const loginRoute = createRoute({
     const session = await context.queryClient.ensureQueryData({
       queryKey: ["session"],
       queryFn: () => authClient.getSession().then((r) => r.data),
+      // Invariant 2: Coordinate with useSession freshness windows
+      staleTime: 60_000,
+      gcTime: 300_000,
     });
 
     // Redirect if authenticated
@@ -50,6 +53,9 @@ const appRoute = createRoute({
     const session = await context.queryClient.ensureQueryData({
       queryKey: ["session"],
       queryFn: () => authClient.getSession().then((r) => r.data),
+      // Invariant 2: Coordinate with useSession freshness windows
+      staleTime: 60_000,
+      gcTime: 300_000,
     });
 
     // Redirect if guest
@@ -61,14 +67,22 @@ const appRoute = createRoute({
 });
 
 // 🟥 Article Authoring Route (Protected)
-// No nested routes, no loaders beyond auth, no search params, no draft IDs
+// Phase B3.4-B: Now supports ?revise=:id for minimal revise flow
 const writeRoute = createRoute({
   getParentRoute: () => rootRoute,
   path: "/write",
+  validateSearch: (search: Record<string, unknown>): { revise?: string } => {
+    return {
+      revise: typeof search.revise === 'string' ? search.revise : undefined,
+    };
+  },
   beforeLoad: async ({ context }) => {
     const session = await context.queryClient.ensureQueryData({
       queryKey: ["session"],
       queryFn: () => authClient.getSession().then((r) => r.data),
+      // Invariant 2: Coordinate with useSession freshness windows
+      staleTime: 60_000,
+      gcTime: 300_000,
     });
     if (!session) throw redirect({ to: "/login" });
   },
@@ -94,18 +108,23 @@ const articleRoute = createRoute({
 // Route Tree
 const routeTree = rootRoute.addChildren([indexRoute, loginRoute, appRoute, writeRoute, articleRoute]);
 
-// Create Router
-export const router = createRouter({
-  routeTree,
-  context: {
-    queryClient: undefined!, // Injected in main.tsx
-  },
-  defaultPreload: "intent",
-});
+// Invariant 4: Router context factory pattern (no undefined!)
+export function createAppRouter(queryClient: QueryClient) {
+  return createRouter({
+    routeTree,
+    context: {
+      queryClient,
+    },
+    defaultPreload: "intent",
+  });
+}
+
+// Type alias for router type
+export type AppRouter = ReturnType<typeof createAppRouter>;
 
 // Type Safety
 declare module "@tanstack/react-router" {
   interface Register {
-    router: typeof router;
+    router: AppRouter;
   }
 }

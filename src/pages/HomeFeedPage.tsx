@@ -6,35 +6,56 @@ import { useHomeFeed } from "../domain/feed/useHomeFeed";
 import { useComposer } from "../domain/composer/useComposer";
 import { ComposerSkeleton } from "../components/ComposerSkeleton";
 import { authClient } from "../lib/auth-client";
+import { getUserRole } from "../domain/permissions/UserRole";
 
 export function HomeFeedPage() {
-  const { data: session } = authClient.useSession();
-  const viewerId = session?.user.id ?? null;
+  const { data: session, isLoading, isPending } = authClient.useSession();
+
+  // All hooks must be called unconditionally before any early returns
+  const viewerId = session?.user?.id ?? "";
+  const viewerRole = getUserRole(session); // Phase C: Get user role for permission gating
 
   // Adapter is created once per page lifecycle
   const adapter = useMemo(() => {
     return new HomeFeedAdapter();
   }, []);
 
-  const { status, items, error, refresh, prepend, addResponse } = useHomeFeed(adapter, viewerId || "");
-  const mainComposer = useComposer(viewerId || "");
-  const replyComposer = useComposer(viewerId || "");
-  
-  const [activeReplyId, setActiveReplyId] = useState<string | null>(null);
+  const { status, items, error, refresh, prepend, addResponse } = useHomeFeed(adapter, viewerId);
+  const mainComposer = useComposer(viewerId);
+  const replyComposer = useComposer(viewerId);
 
-  // Main Composer: Optimistic Prepend
+  const [activeReplyId, setActiveReplyId] = useState<string | null>(null);
+  const [revisingId, setRevisingId] = useState<string | null>(null); // Phase B3.4-B: Track revision target
+
+  // Main Composer: Optimistic Prepend + Revision Support + 409 Conflict Handling
   const wrappedMainComposer = useMemo(() => {
     return {
       ...mainComposer,
       publish: async () => {
-        const item = await mainComposer.publish(session?.user, { clearDraft: true });
-        if (item) {
-          prepend(item);
+        try {
+          const item = await mainComposer.publish(session?.user, {
+            clearDraft: true,
+            supersedesId: revisingId || undefined, // Phase B3.4-B: Include revision target
+          });
+          if (item) {
+            prepend(item);
+            setRevisingId(null); // Clear revision state after publish
+          }
+          refresh(); // Refresh to remove old version
+          return item;
+        } catch (error: any) {
+          // Phase C: Handle 409 Conflict for revisions
+          if (error.status === 409 || (error.message && error.message.includes("already been revised"))) {
+            alert("This post has already been edited or deleted.");
+            setRevisingId(null); // Clear revision state
+            refresh(); // Refresh to show current state
+            throw error;
+          }
+          throw error;
         }
-        return item;
       }
     };
-  }, [mainComposer, prepend, session?.user]);
+  }, [mainComposer, prepend, session?.user, revisingId, refresh]);
 
   // Reply Composer: Optimistic Response + Close on success
   const wrappedReplyComposer = useMemo(() => {
@@ -42,7 +63,7 @@ export function HomeFeedPage() {
       ...replyComposer,
       publish: async () => {
         if (!activeReplyId) return null;
-        
+
         // Opt-in to "tweet" behavior: clear draft after publish
         const item = await replyComposer.publish(session?.user, { replyTo: activeReplyId, clearDraft: true });
         if (item) {
@@ -53,6 +74,16 @@ export function HomeFeedPage() {
       }
     };
   }, [replyComposer, activeReplyId, addResponse, session?.user]);
+
+  // Invariant 1: Auth presence on protected route
+  // Wait for session to load (route guard ensures it exists)
+  if (isLoading || isPending || !session) {
+    return <div>Loading...</div>;
+  }
+
+  if (!viewerId) {
+    throw new Error("Invariant violation: authenticated route without viewerId");
+  }
 
   // 🟥 Initial Load now handled automatically by useHomeFeed hook
   // (See FEED INITIAL FETCH DIRECTIVE in useHomeFeed.ts)
@@ -69,6 +100,71 @@ export function HomeFeedPage() {
     console.log("Navigate to author:", authorId);
   };
 
+  // Phase B3.4-B: Minimal revise flow
+  const handleEdit = async (assertionId: string) => {
+    console.log("[Phase B3.4-B] Revising assertion:", assertionId);
+
+    try {
+      // Find the assertion in the feed
+      const assertion = items.find(item => item.assertionId === assertionId);
+      if (!assertion) {
+        alert("Assertion not found in feed");
+        return;
+      }
+
+      // Prefill main composer with existing content
+      await mainComposer.replaceDraft({
+        text: assertion.text,
+        media: assertion.media || [],
+      });
+
+      // Set revision target
+      setRevisingId(assertionId);
+
+      // Scroll to top to show composer
+      window.scrollTo({ top: 0, behavior: 'smooth' });
+
+      console.log("[Phase B3.4-B] Composer prefilled for revision");
+    } catch (error) {
+      console.error("[Phase B3.4-B] Revise failed:", error);
+      alert(`Failed to load for revision: ${error instanceof Error ? error.message : "Unknown error"}`);
+    }
+  };
+
+  // Phase C: Delete via DELETE endpoint (creates tombstone on backend)
+  const handleDelete = async (assertionId: string) => {
+    if (!confirm("Delete this post? This action cannot be undone.")) {
+      return;
+    }
+
+    try {
+      const response = await fetch(`/api/assertions/${assertionId}`, {
+        method: "DELETE",
+        credentials: "include",
+      });
+
+      if (!response.ok) {
+        const error = await response.json().catch(() => ({ error: "Failed to delete" }));
+
+        // Phase C: Handle 409 Conflict (assertion already revised/deleted)
+        if (response.status === 409) {
+          alert("This post has already been edited or deleted.");
+          refresh(); // Refresh to show current state
+          return;
+        }
+
+        throw new Error(error.error || "Failed to delete assertion");
+      }
+
+      console.log("[Phase C] Deleted assertion via tombstone:", assertionId);
+      // Feed refresh will automatically hide tombstone (projection filters it)
+      refresh();
+    } catch (error) {
+      console.error("[Phase C] Delete failed:", error);
+      alert(`Failed to delete: ${error instanceof Error ? error.message : "Unknown error"}`);
+    }
+  };
+
   return (
     <main aria-label="Home feed page">
       <ComposerSkeleton composer={wrappedMainComposer} />
@@ -80,7 +176,8 @@ export function HomeFeedPage() {
       <HomeFeedContainer
         status={status}
         items={items}
-        viewerId={viewerId || undefined}
+        viewerId={viewerId}
+        viewerRole={viewerRole}
         error={error}
         onRetry={refresh}
         onItemPress={handleItemPress}
@@ -88,6 +185,8 @@ export function HomeFeedPage() {
         activeReplyId={activeReplyId}
         onActiveReplyIdChange={setActiveReplyId}
         replyComposer={wrappedReplyComposer}
+        onEdit={handleEdit}
+        onDelete={handleDelete}
       />
     </main>
   );

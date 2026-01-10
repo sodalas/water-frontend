@@ -6,8 +6,10 @@ export function useSession() {
         queryKey: ["session"],
         queryFn: async () => {
             const result = await authClient.getSession();
-            return result.data; 
+            return result.data;
         },
-        staleTime: 60 * 1000, // 60 seconds
+        // Invariant 2: Explicit freshness windows
+        staleTime: 60_000, // 60 seconds
+        gcTime: 300_000, // 5 minutes
     });
 }

@@ -5,6 +5,7 @@ import { FeedErrorState } from "./feed/FeedErrorState";
 import type { FeedItem } from "../domain/feed/HomeFeedAdapter";
 import type { FeedItemView } from "./feed/types";
 import type { ComposerDraft, MediaItem } from "../domain/composer/useComposer";
+import type { UserRole } from "../domain/permissions/UserRole";
 
 type FeedStatus = "idle" | "loading" | "ready" | "error";
 
@@ -42,6 +43,7 @@ type HomeFeedContainerProps = {
   status: FeedStatus;
   items: FeedItem[];
   viewerId?: string;
+  viewerRole: UserRole;
   error: Error | null;
   onRetry: () => void;
   onItemPress?: (assertionId: string) => void;
@@ -49,6 +51,8 @@ type HomeFeedContainerProps = {
   activeReplyId?: string | null;
   onActiveReplyIdChange?: (id: string | null) => void;
   replyComposer?: ComposerHandle;
+  onEdit?: (assertionId: string) => void;
+  onDelete?: (assertionId: string) => void;
 };
 
 // Recursive conversion for FeedItem -> FeedItemView
@@ -69,12 +73,15 @@ export function HomeFeedContainer(props: HomeFeedContainerProps) {
     status,
     items,
     viewerId,
+    viewerRole,
     onRetry,
     onItemPress,
     onAuthorPress,
     activeReplyId,
     onActiveReplyIdChange,
     replyComposer,
+    onEdit,
+    onDelete,
   } = props;
 
   // 🟥 Feed auto-load invariant:
@@ -92,11 +99,14 @@ export function HomeFeedContainer(props: HomeFeedContainerProps) {
     <HomeFeedList
       items={items.map(toFeedItemView)}
       viewerId={viewerId}
+      viewerRole={viewerRole}
       onItemPress={onItemPress}
       onAuthorPress={onAuthorPress}
       activeReplyId={activeReplyId}
       onActiveReplyIdChange={onActiveReplyIdChange}
       replyComposer={replyComposer}
+      onEdit={onEdit}
+      onDelete={onDelete}
     />
   );
 }
