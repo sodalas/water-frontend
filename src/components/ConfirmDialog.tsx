@@ -1,5 +1,5 @@
 /**
- * Phase D.1: Confirmation Dialog
+ * Confirmation Dialog
  * Required for destructive actions like delete
  */
 
@@ -27,6 +27,7 @@ export function ConfirmDialog({
   variant = "default",
 }: ConfirmDialogProps) {
   const dialogRef = useRef<HTMLDivElement>(null);
+  const confirmButtonRef = useRef<HTMLButtonElement>(null);
 
   // Focus trap and escape key handling
   useEffect(() => {
@@ -39,6 +40,10 @@ export function ConfirmDialog({
     };
 
     document.addEventListener("keydown", handleKeyDown);
+
+    // Focus the confirm button when dialog opens
+    confirmButtonRef.current?.focus();
+
     return () => document.removeEventListener("keydown", handleKeyDown);
   }, [isOpen, onCancel]);
 
@@ -58,10 +63,10 @@ export function ConfirmDialog({
 
   const confirmButtonClass =
     variant === "danger"
-      ? "bg-red-600 hover:bg-red-700 text-white"
+      ? "bg-red-600 hover:bg-red-500 text-white focus-visible:ring-red-500"
       : variant === "warning"
-      ? "bg-yellow-600 hover:bg-yellow-700 text-white"
-      : "bg-brand-primary hover:bg-brand-light text-white";
+      ? "bg-yellow-600 hover:bg-yellow-500 text-white focus-visible:ring-yellow-500"
+      : "bg-brand-primary hover:bg-brand-light text-white focus-visible:ring-brand-primary";
 
   return (
     <div
@@ -72,7 +77,7 @@ export function ConfirmDialog({
     >
       {/* Backdrop */}
       <div
-        className="absolute inset-0 bg-black/60"
+        className="absolute inset-0 bg-black/70 backdrop-blur-sm"
         onClick={onCancel}
         aria-hidden="true"
       />
@@ -80,7 +85,7 @@ export function ConfirmDialog({
       {/* Dialog */}
       <div
         ref={dialogRef}
-        className="relative bg-surface-dark border border-surface-highlight rounded-2xl p-6 max-w-md w-full mx-4 shadow-xl"
+        className="relative bg-surface-dark border border-surface-highlight rounded-2xl p-6 max-w-md w-full mx-4 shadow-2xl"
       >
         <h2
           id="dialog-title"
@@ -88,18 +93,19 @@ export function ConfirmDialog({
         >
           {title}
         </h2>
-        <p className="text-text-muted mb-6">{message}</p>
+        <p className="text-text-muted leading-relaxed mb-6">{message}</p>
 
         <div className="flex gap-3 justify-end">
           <button
             onClick={onCancel}
-            className="px-4 py-2 text-sm text-text-muted hover:text-white border border-surface-highlight rounded-lg transition"
+            className="px-4 py-2 text-sm text-text-muted hover:text-white border border-surface-highlight hover:border-surface-highlight/80 rounded-lg transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-primary/50 focus-visible:ring-offset-2 focus-visible:ring-offset-surface-dark"
           >
             {cancelLabel}
           </button>
           <button
+            ref={confirmButtonRef}
             onClick={onConfirm}
-            className={`px-4 py-2 text-sm rounded-lg transition ${confirmButtonClass}`}
+            className={`px-4 py-2 text-sm rounded-lg transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-offset-2 focus-visible:ring-offset-surface-dark ${confirmButtonClass}`}
           >
             {confirmLabel}
           </button>

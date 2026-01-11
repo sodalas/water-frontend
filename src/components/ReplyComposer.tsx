@@ -1,5 +1,5 @@
 /**
- * Phase D.1: Reply Composer Component
+ * Reply Composer Component
  *
  * Simplified composer for replies in thread view.
  * Text-only, no media attachments (keeps replies lightweight).
@@ -37,10 +37,10 @@ export function ReplyComposer({
         disabled={composer.isPublishing}
         className="
           w-full min-h-[80px] p-3
-          bg-surface-highlight/30 border border-surface-highlight
-          rounded-xl text-text-body placeholder:text-text-muted
-          focus:outline-none focus:border-brand-primary/50
-          resize-none transition
+          bg-surface-highlight/20 border border-surface-highlight/60
+          rounded-xl text-text-body placeholder:text-text-muted/60
+          focus:outline-none focus:border-brand-primary/50 focus:ring-2 focus:ring-brand-primary/20
+          resize-none transition-colors
           disabled:opacity-50 disabled:cursor-not-allowed
         "
       />
@@ -61,8 +61,9 @@ export function ReplyComposer({
           className="
             px-4 py-2 text-sm font-medium
             bg-brand-primary hover:bg-brand-light
-            text-white rounded-lg transition
+            text-white rounded-lg transition-colors
             disabled:opacity-50 disabled:cursor-not-allowed
+            focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-primary focus-visible:ring-offset-2 focus-visible:ring-offset-surface-dark
           "
         >
           {composer.isPublishing ? "Posting..." : "Reply"}

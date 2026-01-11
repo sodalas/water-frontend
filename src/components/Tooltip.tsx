@@ -1,9 +1,9 @@
 /**
- * Phase D.1: Simple Tooltip Component
+ * Simple Tooltip Component
  * Displays explanatory text on hover for disabled actions
  */
 
-import { useState, useRef, useEffect } from "react";
+import { useState } from "react";
 
 interface TooltipProps {
   content: string;
@@ -13,7 +13,6 @@ interface TooltipProps {
 
 export function Tooltip({ content, children, position = "top" }: TooltipProps) {
   const [isVisible, setIsVisible] = useState(false);
-  const triggerRef = useRef<HTMLDivElement>(null);
 
   // Don't render tooltip if no content
   if (!content) {
@@ -29,7 +28,6 @@ export function Tooltip({ content, children, position = "top" }: TooltipProps) {
 
   return (
     <div
-      ref={triggerRef}
       className="relative inline-block"
       onMouseEnter={() => setIsVisible(true)}
       onMouseLeave={() => setIsVisible(false)}
@@ -37,20 +35,20 @@ export function Tooltip({ content, children, position = "top" }: TooltipProps) {
       onBlur={() => setIsVisible(false)}
     >
       {children}
-      {isVisible && (
-        <div
-          role="tooltip"
-          className={`
-            absolute z-50 px-2 py-1 text-xs
-            bg-surface-dark border border-surface-highlight
-            text-text-muted rounded shadow-lg
-            whitespace-nowrap pointer-events-none
-            ${positionClasses[position]}
-          `}
-        >
-          {content}
-        </div>
-      )}
+      <div
+        role="tooltip"
+        className={`
+          absolute z-50 px-2.5 py-1.5 text-xs
+          bg-surface-dark border border-surface-highlight
+          text-text-muted rounded-lg shadow-xl
+          whitespace-nowrap pointer-events-none
+          transition-opacity duration-150
+          ${positionClasses[position]}
+          ${isVisible ? "opacity-100" : "opacity-0"}
+        `}
+      >
+        {content}
+      </div>
     </div>
   );
 }

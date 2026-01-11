@@ -1,5 +1,5 @@
 /**
- * Phase D.1: Thread Page with Full Interaction Surface
+ * Thread Page with Full Interaction Surface
  *
  * - Thread root clearly distinguished from replies
  * - Reply affordances with proper targeting
@@ -116,10 +116,11 @@ export function ThreadPage() {
   if (status === "idle" || status === "loading") {
     return (
       <main className="mx-auto max-w-2xl px-6 py-12">
-        <div className="animate-pulse space-y-4">
-          <div className="h-32 bg-surface-highlight rounded-2xl" />
-          <div className="h-24 bg-surface-highlight rounded-2xl" />
-          <div className="h-24 bg-surface-highlight rounded-2xl" />
+        <div className="animate-pulse space-y-6">
+          <div className="h-36 bg-surface-highlight/60 rounded-2xl" />
+          <div className="h-px bg-surface-highlight/40" />
+          <div className="h-28 bg-surface-highlight/40 rounded-2xl" />
+          <div className="h-28 bg-surface-highlight/40 rounded-2xl" />
         </div>
       </main>
     );
@@ -160,9 +161,9 @@ export function ThreadPage() {
       {/* Back link */}
       <Link
         to="/app"
-        className="inline-flex items-center gap-2 text-text-muted hover:text-white mb-6 transition"
+        className="inline-flex items-center gap-2 text-text-muted hover:text-white mb-8 transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-primary/50 focus-visible:ring-offset-2 focus-visible:ring-offset-[#0b0f14] rounded-sm"
       >
-        <span>&larr;</span>
+        <span aria-hidden="true">&larr;</span>
         <span>Back to Feed</span>
       </Link>
 
@@ -186,16 +187,16 @@ export function ThreadPage() {
 
       {/* Responses Section */}
       {responses.length > 0 && (
-        <div className="mt-6">
-          <div className="text-sm text-text-muted mb-4 flex items-center gap-2">
-            <span className="w-8 border-t border-surface-highlight" />
-            <span>
+        <div className="mt-8">
+          <div className="text-sm text-text-muted/80 mb-5 flex items-center gap-3">
+            <span className="w-8 border-t border-surface-highlight/60" aria-hidden="true" />
+            <span className="font-medium">
               {responses.length} {responses.length === 1 ? "reply" : "replies"}
             </span>
-            <span className="flex-1 border-t border-surface-highlight" />
+            <span className="flex-1 border-t border-surface-highlight/60" aria-hidden="true" />
           </div>
 
-          <div className="space-y-4 border-l-2 border-surface-highlight pl-4">
+          <div className="space-y-4 border-l-2 border-surface-highlight/50 pl-5 ml-1">
             {responses.map((response) => (
               <ThreadItem
                 key={response.assertionId}
@@ -225,10 +226,28 @@ export function ThreadPage() {
 
       {/* Empty state for threads with no replies */}
       {responses.length === 0 && (
-        <div className="mt-8 text-center text-text-muted">
-          <p>No replies yet.</p>
+        <div className="mt-10 text-center">
+          <div
+            className="size-12 rounded-full bg-surface-highlight/30 flex items-center justify-center mx-auto mb-4"
+            aria-hidden="true"
+          >
+            <svg
+              className="size-6 text-text-muted/60"
+              fill="none"
+              viewBox="0 0 24 24"
+              stroke="currentColor"
+              strokeWidth={1.5}
+            >
+              <path
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                d="M8.625 12a.375.375 0 11-.75 0 .375.375 0 01.75 0zm0 0H8.25m4.125 0a.375.375 0 11-.75 0 .375.375 0 01.75 0zm0 0H12m4.125 0a.375.375 0 11-.75 0 .375.375 0 01.75 0zm0 0h-.375M21 12c0 4.556-4.03 8.25-9 8.25a9.764 9.764 0 01-2.555-.337A5.972 5.972 0 015.41 20.97a5.969 5.969 0 01-.474-.065 4.48 4.48 0 00.978-2.025c.09-.457-.133-.901-.467-1.226C3.93 16.178 3 14.189 3 12c0-4.556 4.03-8.25 9-8.25s9 3.694 9 8.25z"
+              />
+            </svg>
+          </div>
+          <p className="text-text-muted/80 text-sm">No replies yet.</p>
           {isAuthenticated && (
-            <p className="mt-2">Be the first to reply!</p>
+            <p className="text-text-muted/60 text-xs mt-1">Be the first to reply!</p>
           )}
         </div>
       )}
@@ -295,10 +314,10 @@ function ThreadItem({
   return (
     <article
       className={`
-        bg-surface-dark border rounded-2xl p-5 flex gap-4
+        bg-surface-dark border rounded-2xl p-5 flex gap-4 transition-colors
         ${isRoot
           ? "border-brand-primary/30 shadow-lg shadow-brand-primary/5"
-          : "border-surface-highlight"
+          : "border-surface-highlight/60 hover:border-surface-highlight"
         }
       `}
     >
@@ -308,27 +327,27 @@ function ThreadItem({
           <img
             src={item.author.avatarUrl}
             alt={name}
-            className={`rounded-full object-cover ${isRoot ? "size-12" : "size-10"}`}
+            className={`rounded-full object-cover ${isRoot ? "size-12 ring-2 ring-brand-primary/20" : "size-10 ring-1 ring-surface-highlight/50"}`}
           />
         ) : (
           <div
             className={`rounded-full bg-surface-highlight ${
-              isRoot ? "size-12" : "size-10"
+              isRoot ? "size-12 ring-2 ring-brand-primary/20" : "size-10 ring-1 ring-surface-highlight/50"
             }`}
           />
         )}
       </div>
 
       <div className="flex flex-col flex-1 min-w-0">
-        <header className="flex items-center gap-2 mb-2">
+        <header className="flex items-center gap-2 mb-1">
           <span className={`font-semibold text-white truncate ${isRoot ? "text-lg" : ""}`}>
             {name}
           </span>
           {handle && (
             <span className="text-sm text-text-muted truncate">@{handle}</span>
           )}
-          <span className="text-sm text-text-muted">·</span>
-          <time className="text-sm text-text-muted whitespace-nowrap">
+          <span className="text-xs text-text-muted/60">·</span>
+          <time className="text-sm text-text-muted/80 whitespace-nowrap">
             {item.createdAt}
           </time>
 
@@ -347,22 +366,15 @@ function ThreadItem({
 
         {/* Root indicator */}
         {isRoot && (
-          <div className="text-xs text-brand-primary mb-2 font-medium">
+          <div className="text-xs text-brand-primary/90 mb-2 font-medium tracking-wide uppercase">
             Thread
-          </div>
-        )}
-
-        {/* Reply indicator */}
-        {!isRoot && (
-          <div className="text-xs text-text-muted mb-2">
-            Reply
           </div>
         )}
 
         {/* Text */}
         {item.text && (
-          <p className={`text-text-body leading-relaxed whitespace-pre-wrap mb-3 ${
-            isRoot ? "text-base" : "text-sm"
+          <p className={`text-text-body leading-relaxed whitespace-pre-wrap ${
+            isRoot ? "text-base mt-1" : "text-sm mt-1"
           }`}>
             {item.text}
           </p>
@@ -370,7 +382,7 @@ function ThreadItem({
 
         {/* Media */}
         {item.media?.length ? (
-          <div className="mt-2 space-y-3">
+          <div className="mt-4 space-y-3">
             {item.media.map((m, i) => {
               if (m.type === "image") {
                 return (
@@ -387,13 +399,15 @@ function ThreadItem({
                   <a
                     key={i}
                     href={m.src}
-                    className="block p-4 rounded-xl bg-surface-highlight/30 border border-surface-highlight hover:bg-surface-highlight/50 transition"
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="block p-4 rounded-xl bg-surface-highlight/20 border border-surface-highlight hover:bg-surface-highlight/40 transition-colors"
                   >
                     <div className="text-sm font-medium text-white truncate">
                       {m.title ?? m.domain ?? m.src}
                     </div>
                     {m.domain && (
-                      <div className="text-xs text-text-muted mt-1">
+                      <div className="text-xs text-text-muted/70 mt-1">
                         {m.domain}
                       </div>
                     )}
@@ -406,13 +420,13 @@ function ThreadItem({
         ) : null}
 
         {/* Footer actions */}
-        <footer className="mt-4 flex items-center gap-4">
+        <footer className="mt-5 pt-3 border-t border-surface-highlight/50 flex items-center gap-4">
           {/* Reply button with tooltip for disabled state */}
           {replyDisabledReason ? (
             <Tooltip content={replyDisabledReason}>
               <button
                 disabled
-                className="text-sm text-text-muted/50 cursor-not-allowed"
+                className="text-sm text-text-muted/40 cursor-not-allowed"
               >
                 Reply
               </button>
@@ -421,7 +435,7 @@ function ThreadItem({
             <button
               onClick={onReplyToggle}
               disabled={isPublishing}
-              className="text-sm text-text-muted hover:text-white transition disabled:opacity-50 disabled:cursor-not-allowed"
+              className="text-sm text-text-muted hover:text-white transition-colors disabled:opacity-50 disabled:cursor-not-allowed focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-primary/50 focus-visible:ring-offset-2 focus-visible:ring-offset-surface-dark rounded-sm"
             >
               {isReplyActive ? "Cancel" : "Reply"}
             </button>
@@ -430,7 +444,7 @@ function ThreadItem({
 
         {/* Reply composer */}
         {isReplyActive && replyComposer && (
-          <div className="mt-4 pt-4 border-t border-surface-highlight">
+          <div className="mt-4 pt-4 border-t border-surface-highlight/50">
             <ReplyComposer composer={replyComposer} autoFocus />
           </div>
         )}

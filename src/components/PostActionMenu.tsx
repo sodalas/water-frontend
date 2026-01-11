@@ -1,5 +1,5 @@
 /**
- * Phase D.1: Action Menu with Permission Surface
+ * Action Menu with Permission Surface
  *
  * Dropdown menu for Edit/Delete actions with:
  * - Disabled states with explanations
@@ -16,10 +16,11 @@ interface PostActionMenuProps {
   canDelete: boolean;
   onEdit: () => void;
   onDelete: () => void;
-  // Phase D.1: Explanations for disabled states
+  /** Explanation for why edit is disabled */
   editDisabledReason?: string;
+  /** Explanation for why delete is disabled */
   deleteDisabledReason?: string;
-  // Phase D.1: Whether this is a superseded version (prevents all actions)
+  /** Whether this is a superseded version (prevents all actions) */
   isSuperseded?: boolean;
 }
 
@@ -50,7 +51,7 @@ export function PostActionMenu({
     return () => document.removeEventListener("mousedown", handleClickOutside);
   }, [isOpen]);
 
-  // Phase D.1: Compute effective disabled reasons
+  // Compute effective disabled reasons (superseded takes precedence)
   const effectiveEditDisabled = isSuperseded
     ? "Cannot edit superseded content"
     : editDisabledReason;
@@ -59,7 +60,7 @@ export function PostActionMenu({
     ? "Cannot delete superseded content"
     : deleteDisabledReason;
 
-  // Phase D.1: Show menu if any action is potentially available (even if disabled)
+  // Show menu if any action is potentially available (even if disabled)
   // This provides visibility into why actions aren't available
   const hasAnyPotentialAction = canEdit || canDelete;
 
@@ -84,7 +85,7 @@ export function PostActionMenu({
         {/* More button (horizontal three dots) */}
         <button
           onClick={() => setIsOpen(!isOpen)}
-          className="text-text-muted hover:text-white transition p-1"
+          className="text-text-muted hover:text-white transition-colors p-1.5 rounded-lg hover:bg-surface-highlight/50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-primary/50 focus-visible:ring-offset-2 focus-visible:ring-offset-surface-dark"
           aria-label="Post actions"
           aria-expanded={isOpen}
           aria-haspopup="menu"
@@ -94,6 +95,7 @@ export function PostActionMenu({
             fill="none"
             stroke="currentColor"
             viewBox="0 0 24 24"
+            aria-hidden="true"
           >
             <circle cx="12" cy="12" r="1.5" fill="currentColor" />
             <circle cx="19" cy="12" r="1.5" fill="currentColor" />
@@ -105,7 +107,7 @@ export function PostActionMenu({
         {isOpen && (
           <div
             role="menu"
-            className="absolute right-0 top-full mt-1 bg-surface-dark border border-surface-highlight rounded-lg shadow-lg py-1 min-w-[140px] z-10"
+            className="absolute right-0 top-full mt-2 bg-surface-dark border border-surface-highlight rounded-xl shadow-xl py-1.5 min-w-[140px] z-10"
           >
             {/* Edit action */}
             {canEdit && !isSuperseded ? (
@@ -115,7 +117,7 @@ export function PostActionMenu({
                   setIsOpen(false);
                   onEdit();
                 }}
-                className="w-full text-left px-4 py-2 text-sm text-text-body hover:bg-surface-highlight transition"
+                className="w-full text-left px-4 py-2 text-sm text-text-body hover:bg-surface-highlight/60 transition-colors focus-visible:outline-none focus-visible:bg-surface-highlight/60"
               >
                 Edit
               </button>
@@ -124,7 +126,7 @@ export function PostActionMenu({
                 <button
                   role="menuitem"
                   disabled
-                  className="w-full text-left px-4 py-2 text-sm text-text-muted/50 cursor-not-allowed"
+                  className="w-full text-left px-4 py-2 text-sm text-text-muted/40 cursor-not-allowed"
                   aria-disabled="true"
                 >
                   Edit
@@ -137,7 +139,7 @@ export function PostActionMenu({
               <button
                 role="menuitem"
                 onClick={handleDeleteClick}
-                className="w-full text-left px-4 py-2 text-sm text-text-body hover:bg-surface-highlight hover:text-red-400 transition"
+                className="w-full text-left px-4 py-2 text-sm text-text-body hover:bg-surface-highlight/60 hover:text-red-400 transition-colors focus-visible:outline-none focus-visible:bg-surface-highlight/60"
               >
                 Delete
               </button>
@@ -146,7 +148,7 @@ export function PostActionMenu({
                 <button
                   role="menuitem"
                   disabled
-                  className="w-full text-left px-4 py-2 text-sm text-text-muted/50 cursor-not-allowed"
+                  className="w-full text-left px-4 py-2 text-sm text-text-muted/40 cursor-not-allowed"
                   aria-disabled="true"
                 >
                   Delete
