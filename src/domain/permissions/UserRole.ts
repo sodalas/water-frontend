@@ -23,18 +23,20 @@ export function getUserRole(session: any): UserRole {
 /**
  * Check if user can edit a post
  *
+ * Phase C Hardening: Only the author can edit their own posts.
+ * Admin/super-admin branches removed until backend provides role verification.
+ *
  * Rules:
  * - Viewer is the author
- * - OR viewer role is admin/super-admin
  */
 export function canEdit(
   viewerId: string | undefined,
   authorId: string,
-  viewerRole: UserRole
+  _viewerRole: UserRole
 ): boolean {
   if (!viewerId) return false; // Guests cannot edit
   if (viewerId === authorId) return true; // Author can always edit
-  if (viewerRole === "admin" || viewerRole === "super-admin") return true; // Admins can edit
+  // Note: Admin/super-admin capability deferred until backend role support
   return false;
 }
 

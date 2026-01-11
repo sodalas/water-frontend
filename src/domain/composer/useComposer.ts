@@ -294,7 +294,7 @@ export function useComposer(viewerId: string) {
           text: state.draft.text,
           assertionType,
           visibility: "public",
-          refs: options?.replyTo ? [options.replyTo] : [],
+          refs: options?.replyTo ? [{ uri: options.replyTo }] : [],
           media: state.draft.media,
           originPublicationId: state.draft.originPublicationId,
         };

@@ -1,5 +1,7 @@
 // src/domain/feed/HomeFeedAdapter.ts
 
+import type { MediaItem } from "../composer/useComposer";
+
 export type FeedStatus = "idle" | "loading" | "ready" | "error";
 
 export interface FeedItem {
@@ -12,19 +14,19 @@ export interface FeedItem {
   };
   assertionType: string;
   text: string;
-  media?: any[];
+  media?: MediaItem[];
   createdAt: string;
   visibility: string;
   replyTo?: string;
   responses?: FeedItem[];
 }
 
-export interface FeedSnapshot {
-  status: FeedStatus;
-  data: FeedItem[] | null;
-  error: Error | null;
-  nextCursor: string | null;
-}
+// 🟥 VIOLATION #2 FIX: Discriminated union prevents impossible states at compile time
+export type FeedSnapshot =
+  | { status: "idle"; data: null; error: null; nextCursor: null }
+  | { status: "loading"; data: FeedItem[] | null; error: null; nextCursor: string | null }
+  | { status: "ready"; data: FeedItem[]; error: null; nextCursor: string | null }
+  | { status: "error"; data: FeedItem[] | null; error: Error; nextCursor: string | null };
 
 /**
  * Platform-Agnostic Adapter for the Home Feed.
@@ -53,7 +55,8 @@ export class HomeFeedAdapter {
   async fetch(
     snapshot: FeedSnapshot,
     viewerId: string,
-    cursor: string | null = null
+    cursor: string | null = null,
+    signal?: AbortSignal
   ): Promise<FeedSnapshot> {
     try {
       console.debug(`[HomeFeedAdapter] Fetching for ${viewerId}, cursor: ${cursor}`);
@@ -62,6 +65,7 @@ export class HomeFeedAdapter {
       const response = await fetch(`/api/home${query}`, {
         credentials: "include",
         headers: { "Content-Type": "application/json" },
+        signal,
       });
 
       if (!response.ok) throw new Error("Failed to fetch home feed");

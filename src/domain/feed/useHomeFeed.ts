@@ -1,11 +1,12 @@
 // src/domain/feed/useHomeFeed.ts
 import { useState, useEffect, useCallback } from "react";
-import type { HomeFeedAdapter, FeedSnapshot } from "./HomeFeedAdapter";
+import type { HomeFeedAdapter, FeedSnapshot, FeedItem } from "./HomeFeedAdapter";
 
 export function useHomeFeed(adapter: HomeFeedAdapter, viewerId: string) {
   const [snapshot, setSnapshot] = useState<FeedSnapshot>(adapter.idle());
 
-  const load = useCallback(async () => {
+  // 🟥 VIOLATION #1 FIX: Accept AbortSignal for cancellation support
+  const load = useCallback(async (signal?: AbortSignal) => {
     if (!viewerId) return;
 
     // Capture current snapshot for consistent state throughout async operation
@@ -16,17 +17,24 @@ export function useHomeFeed(adapter: HomeFeedAdapter, viewerId: string) {
     });
 
     // Delegate transitions to adapter using captured snapshot
-    const result = await adapter.fetch(capturedSnapshot!, viewerId);
-    setSnapshot(result);
+    const result = await adapter.fetch(capturedSnapshot!, viewerId, null, signal);
+    
+    // 🟥 VIOLATION #1 FIX: Only set state if not aborted (prevents race conditions)
+    if (!signal?.aborted) {
+      setSnapshot(result);
+    }
   }, [adapter, viewerId]);
 
   // 🟥 FEED INITIAL FETCH DIRECTIVE
   // Visiting the feed route MUST trigger an initial fetch
   // Manual refresh is allowed as a retry mechanism, not as a prerequisite
+  // 🟥 VIOLATION #1 FIX: Return cleanup function to abort pending requests
   useEffect(() => {
+    const controller = new AbortController();
     if (viewerId) {
-      load();
+      load(controller.signal);
     }
+    return () => controller.abort();
   }, [load, viewerId]);
 
   // Explicit Transition: Load More
@@ -46,7 +54,8 @@ export function useHomeFeed(adapter: HomeFeedAdapter, viewerId: string) {
   }, [adapter, viewerId]);
 
   // Prepend Logic for Optimistic Updates
-  const prepend = useCallback((item: any) => { // Using any broadly here, but should match FeedItem
+  // 🟥 VIOLATION #3 FIX: Use FeedItem type instead of any
+  const prepend = useCallback((item: FeedItem) => {
     setSnapshot(current => {
       if (!current.data) return current;
       
@@ -58,11 +67,12 @@ export function useHomeFeed(adapter: HomeFeedAdapter, viewerId: string) {
       return {
         ...current,
         data: [item, ...current.data]
-      };
+      } as FeedSnapshot;
     });
   }, []);
 
-  const addResponse = useCallback((parentId: string, responseItem: any) => {
+  // 🟥 VIOLATION #3 FIX: Use FeedItem type instead of any
+  const addResponse = useCallback((parentId: string, responseItem: FeedItem) => {
     setSnapshot(current => {
       if (!current.data) return current;
 
@@ -70,8 +80,8 @@ export function useHomeFeed(adapter: HomeFeedAdapter, viewerId: string) {
          if (parent.assertionId !== parentId) return parent;
 
          // Check if response already exists
-         const existingResponses = (parent as any).responses || []; // Type cast if necessary until FeedItem updated
-         if (existingResponses.some((r: any) => r.assertionId === responseItem.assertionId)) {
+         const existingResponses = parent.responses || [];
+         if (existingResponses.some((r) => r.assertionId === responseItem.assertionId)) {
              return parent;
          }
 
@@ -84,6 +94,18 @@ export function useHomeFeed(adapter: HomeFeedAdapter, viewerId: string) {
       return {
           ...current,
           data: newData
+      } as FeedSnapshot;
+    });
+  }, []);
+
+  // Phase C Hardening: Optimistic removal by exact ID (for superseded assertions)
+  const removeItem = useCallback((assertionId: string) => {
+    setSnapshot(current => {
+      if (!current.data) return current;
+
+      return {
+        ...current,
+        data: current.data.filter(item => item.assertionId !== assertionId)
       };
     });
   }, []);
@@ -98,5 +120,6 @@ export function useHomeFeed(adapter: HomeFeedAdapter, viewerId: string) {
     refresh: load,
     prepend,
     addResponse,
+    removeItem,
   };
 }

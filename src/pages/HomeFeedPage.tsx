@@ -1,5 +1,5 @@
 // HomeFeedPage.tsx
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { HomeFeedAdapter } from "../domain/feed/HomeFeedAdapter";
 import { HomeFeedContainer } from "../components/HomeFeedContainer.tsx";
 import { useHomeFeed } from "../domain/feed/useHomeFeed";
@@ -7,6 +7,7 @@ import { useComposer } from "../domain/composer/useComposer";
 import { ComposerSkeleton } from "../components/ComposerSkeleton";
 import { authClient } from "../lib/auth-client";
 import { getUserRole } from "../domain/permissions/UserRole";
+import { notifyConflict } from "../domain/notifications/notifyConflict";
 
 export function HomeFeedPage() {
   const { data: session, isLoading, isPending } = authClient.useSession();
@@ -20,25 +21,35 @@ export function HomeFeedPage() {
     return new HomeFeedAdapter();
   }, []);
 
-  const { status, items, error, refresh, prepend, addResponse } = useHomeFeed(adapter, viewerId);
+  const { status, items, error, refresh, prepend, addResponse, removeItem } = useHomeFeed(adapter, viewerId);
   const mainComposer = useComposer(viewerId);
   const replyComposer = useComposer(viewerId);
 
   const [activeReplyId, setActiveReplyId] = useState<string | null>(null);
   const [revisingId, setRevisingId] = useState<string | null>(null); // Phase B3.4-B: Track revision target
 
+  // Phase C Hardening: Clear revision state on viewer change
+  useEffect(() => {
+    setRevisingId(null);
+  }, [viewerId]);
+
   // Main Composer: Optimistic Prepend + Revision Support + 409 Conflict Handling
   const wrappedMainComposer = useMemo(() => {
     return {
       ...mainComposer,
       publish: async () => {
+        const supersededId = revisingId; // Capture for optimistic removal
         try {
           const item = await mainComposer.publish(session?.user, {
             clearDraft: true,
-            supersedesId: revisingId || undefined, // Phase B3.4-B: Include revision target
+            supersedesId: supersededId || undefined, // Phase B3.4-B: Include revision target
           });
           if (item) {
             prepend(item);
+            // Phase C Hardening: Optimistically remove superseded assertion by exact ID
+            if (supersededId) {
+              removeItem(supersededId);
+            }
             setRevisingId(null); // Clear revision state after publish
           }
           refresh(); // Refresh to remove old version
@@ -46,7 +57,7 @@ export function HomeFeedPage() {
         } catch (error: any) {
           // Phase C: Handle 409 Conflict for revisions
           if (error.status === 409 || (error.message && error.message.includes("already been revised"))) {
-            alert("This post has already been edited or deleted.");
+            notifyConflict("This post has already been edited or deleted.");
             setRevisingId(null); // Clear revision state
             refresh(); // Refresh to show current state
             throw error;
@@ -55,7 +66,7 @@ export function HomeFeedPage() {
         }
       }
     };
-  }, [mainComposer, prepend, session?.user, revisingId, refresh]);
+  }, [mainComposer, prepend, removeItem, session?.user, revisingId, refresh]);
 
   // Reply Composer: Optimistic Response + Close on success
   const wrappedReplyComposer = useMemo(() => {
@@ -112,10 +123,12 @@ export function HomeFeedPage() {
         return;
       }
 
-      // Prefill main composer with existing content
+      // Phase C Hardening: Prefill main composer with existing content, preserving provenance
       await mainComposer.replaceDraft({
         text: assertion.text,
         media: assertion.media || [],
+        // Preserve originPublicationId if present (provenance preservation)
+        originPublicationId: (assertion as any).originPublicationId,
       });
 
       // Set revision target
@@ -148,7 +161,7 @@ export function HomeFeedPage() {
 
         // Phase C: Handle 409 Conflict (assertion already revised/deleted)
         if (response.status === 409) {
-          alert("This post has already been edited or deleted.");
+          notifyConflict("This post has already been edited or deleted.");
           refresh(); // Refresh to show current state
           return;
         }

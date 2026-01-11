@@ -4,7 +4,7 @@ import { FeedSkeletonList } from "./feed/FeedSkeletonList";
 import { FeedErrorState } from "./feed/FeedErrorState";
 import type { FeedItem } from "../domain/feed/HomeFeedAdapter";
 import type { FeedItemView } from "./feed/types";
-import type { ComposerDraft, MediaItem } from "../domain/composer/useComposer";
+import type { ComposerDraft } from "../domain/composer/useComposer";
 import type { UserRole } from "../domain/permissions/UserRole";
 
 type FeedStatus = "idle" | "loading" | "ready" | "error";

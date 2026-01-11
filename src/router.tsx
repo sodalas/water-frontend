@@ -44,6 +44,7 @@ const loginRoute = createRoute({
 
 import { ArticleAuthoringPage } from "./pages/ArticleAuthoringPage";
 import { ArticleReadingPage } from "./pages/ArticleReadingPage";
+import { ThreadPage } from "./pages/ThreadPage";
 
 // App Route (Protected)
 const appRoute = createRoute({
@@ -105,8 +106,15 @@ const articleRoute = createRoute({
   component: ArticleReadingPage,
 });
 
+// Phase C.5: Thread Reading Route (PUBLIC - works without auth, visibility enforced by backend)
+const threadRoute = createRoute({
+  getParentRoute: () => rootRoute,
+  path: "/thread/$assertionId",
+  component: ThreadPage,
+});
+
 // Route Tree
-const routeTree = rootRoute.addChildren([indexRoute, loginRoute, appRoute, writeRoute, articleRoute]);
+const routeTree = rootRoute.addChildren([indexRoute, loginRoute, appRoute, writeRoute, articleRoute, threadRoute]);
 
 // Invariant 4: Router context factory pattern (no undefined!)
 export function createAppRouter(queryClient: QueryClient) {

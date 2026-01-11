@@ -1,8 +1,17 @@
-// FeedItemCard now uses FeedItemView
-import { useState } from "react";
+/**
+ * Phase D.1: FeedItemCard with Full Interaction Surface
+ *
+ * - Thread navigation for all root posts
+ * - Reply affordances with proper targeting
+ * - Edit/Delete with permission checks and explanations
+ * - Visual distinction for responses
+ */
+
+import { Link } from "@tanstack/react-router";
 import type { FeedItemView } from "./feed/types";
 import { ComposerSkeleton } from "./ComposerSkeleton";
 import { PostActionMenu } from "./PostActionMenu";
+import { Tooltip } from "./Tooltip";
 import type { UserRole } from "../domain/permissions/UserRole";
 import { canEdit, canDelete } from "../domain/permissions/UserRole";
 
@@ -25,16 +34,30 @@ export function FeedItemCard({
   onEdit?: (assertionId: string) => void;
   onDelete?: (assertionId: string) => void;
 }) {
-  const [isExpanded, setIsExpanded] = useState(false);
-
   const isReplying = activeReplyId === item.assertionId;
   const isPublishing = replyComposer?.status === 'publishing';
   const isResponse = item.assertionType === 'response';
   const replyCount = item.responses?.length ?? 0;
+  const isAuthenticated = !!viewerId;
 
   // Phase C: Permission checks for Edit/Delete visibility
   const canEditPost = canEdit(viewerId, item.author.id, viewerRole);
   const canDeletePost = canDelete(viewerId, item.author.id, viewerRole);
+
+  // Phase D.1: Determine disabled reasons
+  const editDisabledReason = !isAuthenticated
+    ? "Sign in to edit"
+    : !canEditPost
+    ? "Only the author can edit"
+    : undefined;
+
+  const deleteDisabledReason = !isAuthenticated
+    ? "Sign in to delete"
+    : !canDeletePost
+    ? "Only the author can delete"
+    : undefined;
+
+  const replyDisabledReason = !isAuthenticated ? "Sign in to reply" : undefined;
   
   const name = item.author.displayName ?? item.author.handle ?? item.author.id;
 
@@ -71,13 +94,15 @@ export function FeedItemCard({
             {item.createdAt}
           </time>
 
-          {/* Phase C: Action menu (Edit/Delete) */}
+          {/* Phase D.1: Action menu with permission explanations */}
           <div className="ml-auto">
             <PostActionMenu
               canEdit={canEditPost}
               canDelete={canDeletePost}
               onEdit={() => onEdit?.(item.assertionId)}
               onDelete={() => onDelete?.(item.assertionId)}
+              editDisabledReason={editDisabledReason}
+              deleteDisabledReason={deleteDisabledReason}
             />
           </div>
         </header>
@@ -140,14 +165,26 @@ export function FeedItemCard({
 
         {/* Footer actions */}
         <footer className="mt-4 flex items-center gap-4">
+            {/* Phase D.1: Reply button with disabled state explanation */}
             {!isResponse && onActiveReplyIdChange && (
-                <button
-                  onClick={() => onActiveReplyIdChange(isReplying ? null : item.assertionId)}
-                  disabled={isPublishing}
-                  className="text-sm text-text-muted hover:text-white transition disabled:opacity-50 disabled:cursor-not-allowed"
-                >
+                replyDisabledReason ? (
+                  <Tooltip content={replyDisabledReason}>
+                    <button
+                      disabled
+                      className="text-sm text-text-muted/50 cursor-not-allowed"
+                    >
+                      Reply{replyCount > 0 ? ` (${replyCount})` : ''}
+                    </button>
+                  </Tooltip>
+                ) : (
+                  <button
+                    onClick={() => onActiveReplyIdChange(isReplying ? null : item.assertionId)}
+                    disabled={isPublishing}
+                    className="text-sm text-text-muted hover:text-white transition disabled:opacity-50 disabled:cursor-not-allowed"
+                  >
                     {isReplying ? "Cancel" : `Reply${replyCount > 0 ? ` (${replyCount})` : ''}`}
-                </button>
+                  </button>
+                )
             )}
         </footer>
         
@@ -157,39 +194,20 @@ export function FeedItemCard({
             </div>
         )}
 
-        {/* Nested Responses (Visual Depth 1) */}
-        {item.responses && item.responses.length > 0 && (
-            <div className="mt-4 border-l-2 border-surface-highlight pl-4">
-               {!isExpanded ? (
-                   <button 
-                     onClick={() => setIsExpanded(true)}
-                     className="text-sm text-brand-primary hover:text-brand-light transition"
-                   >
-                       View {item.responses.length} replies
-                   </button>
-               ) : (
-                   <div className="space-y-4">
-                       <button 
-                         onClick={() => setIsExpanded(false)}
-                         className="text-sm text-text-muted hover:text-white transition mb-4"
-                       >
-                           Hide replies
-                       </button>
-                       {item.responses.map(response => (
-                        <FeedItemCard
-                          key={response.assertionId}
-                          item={response}
-                          viewerId={viewerId}
-                          viewerRole={viewerRole}
-                          activeReplyId={activeReplyId}
-                          onActiveReplyIdChange={onActiveReplyIdChange}
-                          replyComposer={replyComposer}
-                          onEdit={onEdit}
-                          onDelete={onDelete}
-                        />
-                       ))}
-                   </div>
-               )}
+        {/* Phase C.5: Thread Navigation Affordance */}
+        {/* All root assertions expose thread link; thread page handles empty responses */}
+        {!isResponse && (
+            <div className="mt-4">
+               <Link
+                 to="/thread/$assertionId"
+                 params={{ assertionId: item.assertionId }}
+                 className="text-sm text-brand-primary hover:text-brand-light transition inline-flex items-center gap-1"
+               >
+                   {item.responses && item.responses.length > 0
+                     ? `View thread (${item.responses.length} ${item.responses.length === 1 ? 'reply' : 'replies'})`
+                     : 'View thread'}
+                   <span>&rarr;</span>
+               </Link>
             </div>
         )}
       </div>
