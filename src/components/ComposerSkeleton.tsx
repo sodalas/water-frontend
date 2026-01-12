@@ -2,119 +2,152 @@ import type { useComposer } from "../domain/composer/useComposer";
 
 type Composer = ReturnType<typeof useComposer>;
 
-export function ComposerSkeleton({ composer, autoFocus }: { composer: Composer; autoFocus?: boolean }) {
+interface ComposerSkeletonProps {
+  composer: Composer;
+  autoFocus?: boolean;
+  avatarUrl?: string | null;
+}
+
+export function ComposerSkeleton({ composer, autoFocus, avatarUrl }: ComposerSkeletonProps) {
+  const isPublishing = composer.status === "publishing";
+  const canPost = composer.draft.text.trim() || composer.draft.media.length > 0;
+
   return (
-    <div style={{ padding: "1rem", borderBottom: "1px solid #333" }}>
-      <div style={{ display: "flex", justifyContent: "space-between", marginBottom: "0.5rem", fontSize: "0.75rem", color: "#888" }}>
-        <div style={{ display: "flex", gap: "1rem" }}>
-          {/* Draft Restored Indicator */}
-          {composer.isRestored && (
-            <span style={{ color: "#4ade80" }}>Draft restored</span>
-          )}
-
-          {/* Revision Context */}
-          {!composer.isRestored && composer.draft.originPublicationId && (
-             <span style={{ color: "#60a5fa" }}>Revising published note</span>
+    <div className="bg-[#1a1f2e] border border-[#2a3142] rounded-xl p-4">
+      <div className="flex gap-3">
+        {/* Avatar */}
+        <div className="shrink-0">
+          {avatarUrl ? (
+            <img
+              src={avatarUrl}
+              alt=""
+              className="size-10 rounded-full object-cover"
+            />
+          ) : (
+            <div className="size-10 rounded-full bg-[#2a3142]" />
           )}
         </div>
 
-        <div style={{ display: "flex", gap: "1rem" }}>
-           {/* Save State (Error hidden per directive) */}
-           {composer.saveStatus === "saving" && <span>Saving...</span>}
-           {composer.saveStatus === "saved" && <span>Saved</span>}
-           
-           {/* Explicit Clear */}
-           <button
-             type="button"
-             onClick={() => {
-                if(window.confirm("This will permanently delete your draft.")) {
-                    composer.clear();
-                }
-             }}
-             style={{ background: "none", border: "none", color: "#ef4444", cursor: "pointer", padding: 0 }}
-           >
-             Clear
-           </button>
-        </div>
-      </div>
+        {/* Input area */}
+        <div className="flex-1 min-w-0">
+          <textarea
+            autoFocus={autoFocus}
+            value={composer.draft.text}
+            onChange={(e) => composer.setText(e.target.value)}
+            placeholder="What's happening?"
+            disabled={isPublishing}
+            className="
+              w-full min-h-[60px] p-0 bg-transparent border-0
+              text-[#e5e7eb] text-[15px] placeholder:text-[#6b7280]
+              focus:outline-none resize-none
+              disabled:opacity-50 disabled:cursor-not-allowed
+            "
+          />
 
-      <textarea
-        autoFocus={autoFocus}
-        value={composer.draft.text}
-        onChange={(e) => composer.setText(e.target.value)}
-        placeholder="What's happening?"
-        disabled={composer.status === "publishing"}
-        style={{ width: "100%", height: "80px", marginBottom: "0.5rem", display: "block" }}
-      />
-      
-      <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
-        <div style={{ display: "flex", alignItems: "center", gap: "0.5rem" }}>
-          {/* Media Actions */}
-          <button
-            type="button"
-            onClick={() => {
-                const url = prompt("Enter image URL");
-                if (url) composer.addMedia({ type: "image", src: url });
-            }}
-            disabled={composer.status === "publishing"}
-            style={{ fontSize: "0.875rem", color: "#ccc" }}
-          >
-            Add Image
-          </button>
-          
-           <button
-            type="button"
-            onClick={() => {
-                const url = prompt("Enter link URL");
-                if (url) composer.addMedia({ type: "link", src: url });
-            }}
-            disabled={composer.status === "publishing"}
-            style={{ fontSize: "0.875rem", color: "#ccc" }}
-          >
-            Add Link
-          </button>
+          {/* Media Previews */}
+          {composer.draft.media && composer.draft.media.length > 0 && (
+            <div className="mt-2 flex gap-2 flex-wrap">
+              {composer.draft.media.map((m: any) => (
+                <div
+                  key={m.id}
+                  className="relative size-16 bg-[#242938] rounded-lg overflow-hidden"
+                >
+                  {m.type === "image" ? (
+                    <img
+                      src={m.src}
+                      alt=""
+                      className="w-full h-full object-cover"
+                    />
+                  ) : (
+                    <div className="flex items-center justify-center h-full">
+                      <svg className="size-5 text-[#6b7280]" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5}>
+                        <path strokeLinecap="round" strokeLinejoin="round" d="M13.19 8.688a4.5 4.5 0 011.242 7.244l-4.5 4.5a4.5 4.5 0 01-6.364-6.364l1.757-1.757m9.182-5.425a4.5 4.5 0 00-6.364 6.364L10.5 10.5" />
+                      </svg>
+                    </div>
+                  )}
+                  <button
+                    type="button"
+                    onClick={() => composer.removeMedia(m.id)}
+                    className="absolute top-0.5 right-0.5 size-5 flex items-center justify-center bg-black/60 hover:bg-black/80 text-white rounded-full text-xs transition-colors"
+                    aria-label="Remove"
+                  >
+                    ×
+                  </button>
+                </div>
+              ))}
+            </div>
+          )}
 
+          {/* Status messages */}
           {composer.status === "error" && (
-            <span style={{ color: "red", fontSize: "0.875rem", marginLeft: "8px" }}>
-              {composer.error || "Error publishing"}
-            </span>
+            <p className="text-red-400 text-sm mt-2">{composer.error || "Error publishing"}</p>
           )}
           {composer.status === "success" && (
-            <span style={{ color: "green", fontSize: "0.875rem", marginLeft: "8px" }}>
-              Posted!
-            </span>
+            <p className="text-green-400 text-sm mt-2">Posted!</p>
           )}
-        </div>
-        
-        <button 
-          type="button" 
-          onClick={() => composer.publish()}
-          disabled={composer.status === "publishing" || (!composer.draft.text.trim() && (composer.draft.media.length === 0))}
-        >
-          {composer.status === "publishing" ? "Posting..." : "Post"}
-        </button>
-      </div>
-      
-      {/* Media Previews */}
-      {composer.draft.media && composer.draft.media.length > 0 && (
-          <div style={{ marginTop: "0.5rem", display: "flex", gap: "0.5rem", flexWrap: "wrap" }}>
-              {composer.draft.media.map((m: any) => (
-                  <div key={m.id} style={{ position: "relative", width: "60px", height: "60px", background: "#333", borderRadius: "4px", overflow: "hidden" }}>
-                      {m.type === "image" ? (
-                          <img src={m.src} alt="" style={{ width: "100%", height: "100%", objectFit: "cover" }} />
-                      ) : (
-                          <div style={{ padding: "4px", fontSize: "0.7rem", color: "#ccc" }}>Link</div>
-                      )}
-                      <button 
-                        onClick={() => composer.removeMedia(m.id)}
-                        style={{ position: "absolute", top: 0, right: 0, background: "rgba(0,0,0,0.5)", color: "white", border: "none", cursor: "pointer", padding: "0 4px" }}
-                      >
-                          &times;
-                      </button>
-                  </div>
-              ))}
+
+          {/* Footer: actions + post button */}
+          <div className="mt-3 flex items-center justify-between">
+            <div className="flex items-center gap-1">
+              {/* Image button */}
+              <button
+                type="button"
+                onClick={() => {
+                  const url = prompt("Enter image URL");
+                  if (url) composer.addMedia({ type: "image", src: url });
+                }}
+                disabled={isPublishing}
+                className="p-2 text-[#3b82f6] hover:bg-[#3b82f6]/10 rounded-lg transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                aria-label="Add image"
+              >
+                <svg className="size-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5}>
+                  <path strokeLinecap="round" strokeLinejoin="round" d="M2.25 15.75l5.159-5.159a2.25 2.25 0 013.182 0l5.159 5.159m-1.5-1.5l1.409-1.409a2.25 2.25 0 013.182 0l2.909 2.909m-18 3.75h16.5a1.5 1.5 0 001.5-1.5V6a1.5 1.5 0 00-1.5-1.5H3.75A1.5 1.5 0 002.25 6v12a1.5 1.5 0 001.5 1.5zm10.5-11.25h.008v.008h-.008V8.25zm.375 0a.375.375 0 11-.75 0 .375.375 0 01.75 0z" />
+                </svg>
+              </button>
+
+              {/* Link button */}
+              <button
+                type="button"
+                onClick={() => {
+                  const url = prompt("Enter link URL");
+                  if (url) composer.addMedia({ type: "link", src: url });
+                }}
+                disabled={isPublishing}
+                className="p-2 text-[#3b82f6] hover:bg-[#3b82f6]/10 rounded-lg transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                aria-label="Add link"
+              >
+                <svg className="size-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5}>
+                  <path strokeLinecap="round" strokeLinejoin="round" d="M13.19 8.688a4.5 4.5 0 011.242 7.244l-4.5 4.5a4.5 4.5 0 01-6.364-6.364l1.757-1.757m9.182-5.425a4.5 4.5 0 00-6.364 6.364L10.5 10.5" />
+                </svg>
+              </button>
+
+              {/* Save status indicator (subtle) */}
+              {composer.saveStatus === "saving" && (
+                <span className="text-[#4b5563] text-xs ml-2">Saving...</span>
+              )}
+              {composer.isRestored && (
+                <span className="text-[#4ade80] text-xs ml-2">Draft restored</span>
+              )}
+            </div>
+
+            {/* Post button */}
+            <button
+              type="button"
+              onClick={() => composer.publish()}
+              disabled={isPublishing || !canPost}
+              className="
+                px-4 py-1.5 text-sm font-medium
+                bg-[#3b82f6] hover:bg-[#2563eb]
+                text-white rounded-full transition-colors
+                disabled:opacity-50 disabled:cursor-not-allowed
+                focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#3b82f6] focus-visible:ring-offset-2 focus-visible:ring-offset-[#1a1f2e]
+              "
+            >
+              {isPublishing ? "Posting..." : "Post"}
+            </button>
           </div>
-      )}
+        </div>
+      </div>
     </div>
   );
 }

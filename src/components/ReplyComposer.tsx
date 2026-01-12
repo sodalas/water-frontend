@@ -36,10 +36,10 @@ export function ReplyComposer({
         placeholder={placeholder}
         disabled={composer.isPublishing}
         className="
-          w-full min-h-[80px] p-3
-          bg-surface-highlight/20 border border-surface-highlight/60
-          rounded-xl text-text-body placeholder:text-text-muted/60
-          focus:outline-none focus:border-brand-primary/50 focus:ring-2 focus:ring-brand-primary/20
+          w-full min-h-[72px] p-3
+          bg-[#242938] border border-[#2a3142]
+          rounded-lg text-[#e5e7eb] text-sm placeholder:text-[#4b5563]
+          focus:outline-none focus:border-[#3b82f6]/50 focus:ring-1 focus:ring-[#3b82f6]/30
           resize-none transition-colors
           disabled:opacity-50 disabled:cursor-not-allowed
         "
@@ -59,11 +59,11 @@ export function ReplyComposer({
           type="submit"
           disabled={!composer.canPublish}
           className="
-            px-4 py-2 text-sm font-medium
-            bg-brand-primary hover:bg-brand-light
+            px-4 py-1.5 text-sm font-medium
+            bg-[#3b82f6] hover:bg-[#2563eb]
             text-white rounded-lg transition-colors
             disabled:opacity-50 disabled:cursor-not-allowed
-            focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-primary focus-visible:ring-offset-2 focus-visible:ring-offset-surface-dark
+            focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#3b82f6] focus-visible:ring-offset-2 focus-visible:ring-offset-[#1a1f2e]
           "
         >
           {composer.isPublishing ? "Posting..." : "Reply"}

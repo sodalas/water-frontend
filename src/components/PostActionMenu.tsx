@@ -85,21 +85,20 @@ export function PostActionMenu({
         {/* More button (horizontal three dots) */}
         <button
           onClick={() => setIsOpen(!isOpen)}
-          className="text-text-muted hover:text-white transition-colors p-1.5 rounded-lg hover:bg-surface-highlight/50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-primary/50 focus-visible:ring-offset-2 focus-visible:ring-offset-surface-dark"
+          className="text-[#4b5563] hover:text-[#9ca3af] transition-colors p-1 rounded focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#3b82f6]/50"
           aria-label="Post actions"
           aria-expanded={isOpen}
           aria-haspopup="menu"
         >
           <svg
             className="w-5 h-5"
-            fill="none"
-            stroke="currentColor"
+            fill="currentColor"
             viewBox="0 0 24 24"
             aria-hidden="true"
           >
-            <circle cx="12" cy="12" r="1.5" fill="currentColor" />
-            <circle cx="19" cy="12" r="1.5" fill="currentColor" />
-            <circle cx="5" cy="12" r="1.5" fill="currentColor" />
+            <circle cx="5" cy="12" r="2" />
+            <circle cx="12" cy="12" r="2" />
+            <circle cx="19" cy="12" r="2" />
           </svg>
         </button>
 
@@ -107,7 +106,7 @@ export function PostActionMenu({
         {isOpen && (
           <div
             role="menu"
-            className="absolute right-0 top-full mt-2 bg-surface-dark border border-surface-highlight rounded-xl shadow-xl py-1.5 min-w-[140px] z-10"
+            className="absolute right-0 top-full mt-1 bg-[#1a1f2e] border border-[#2a3142] rounded-lg shadow-xl py-1 min-w-[120px] z-10"
           >
             {/* Edit action */}
             {canEdit && !isSuperseded ? (
@@ -117,7 +116,7 @@ export function PostActionMenu({
                   setIsOpen(false);
                   onEdit();
                 }}
-                className="w-full text-left px-4 py-2 text-sm text-text-body hover:bg-surface-highlight/60 transition-colors focus-visible:outline-none focus-visible:bg-surface-highlight/60"
+                className="w-full text-left px-3 py-1.5 text-sm text-[#e5e7eb] hover:bg-[#2a3142] transition-colors focus-visible:outline-none focus-visible:bg-[#2a3142]"
               >
                 Edit
               </button>
@@ -126,7 +125,7 @@ export function PostActionMenu({
                 <button
                   role="menuitem"
                   disabled
-                  className="w-full text-left px-4 py-2 text-sm text-text-muted/40 cursor-not-allowed"
+                  className="w-full text-left px-3 py-1.5 text-sm text-[#4b5563] cursor-not-allowed"
                   aria-disabled="true"
                 >
                   Edit
@@ -139,7 +138,7 @@ export function PostActionMenu({
               <button
                 role="menuitem"
                 onClick={handleDeleteClick}
-                className="w-full text-left px-4 py-2 text-sm text-text-body hover:bg-surface-highlight/60 hover:text-red-400 transition-colors focus-visible:outline-none focus-visible:bg-surface-highlight/60"
+                className="w-full text-left px-3 py-1.5 text-sm text-[#e5e7eb] hover:bg-[#2a3142] hover:text-red-400 transition-colors focus-visible:outline-none focus-visible:bg-[#2a3142]"
               >
                 Delete
               </button>
@@ -148,7 +147,7 @@ export function PostActionMenu({
                 <button
                   role="menuitem"
                   disabled
-                  className="w-full text-left px-4 py-2 text-sm text-text-muted/40 cursor-not-allowed"
+                  className="w-full text-left px-3 py-1.5 text-sm text-[#4b5563] cursor-not-allowed"
                   aria-disabled="true"
                 >
                   Delete

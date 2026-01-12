@@ -68,33 +68,32 @@ export function FeedItemCard({
     : null;
 
   return (
-    <article className="bg-surface-dark border border-surface-highlight rounded-2xl p-5 flex gap-4 transition-colors hover:border-surface-highlight/80">
+    <article className="bg-[#1a1f2e] border border-[#2a3142] rounded-xl p-4 flex gap-3">
       {/* Avatar */}
       <div className="shrink-0">
         {item.author.avatarUrl ? (
           <img
             src={item.author.avatarUrl}
             alt={name}
-            className="size-11 rounded-full object-cover ring-2 ring-surface-highlight/50"
+            className="size-10 rounded-full object-cover"
           />
         ) : (
-          <div className="size-11 rounded-full bg-surface-highlight ring-2 ring-surface-highlight/30" />
+          <div className="size-10 rounded-full bg-[#2a3142]" />
         )}
       </div>
 
       <div className="flex flex-col flex-1 min-w-0">
-        <header className="flex items-center gap-2 mb-1">
-          <span className="font-semibold text-white truncate">{name}</span>
-
+        <header className="flex items-center gap-1.5 mb-0.5">
+          <span className="font-semibold text-white text-[15px] truncate">{name}</span>
           {handle && (
-            <span className="text-sm text-text-muted truncate">@{handle}</span>
+            <span className="text-[13px] text-[#6b7280] truncate">@{handle}</span>
           )}
-          <span className="text-xs text-text-muted/60">·</span>
-          <time className="text-sm text-text-muted/80 whitespace-nowrap">
+          <span className="text-[13px] text-[#4b5563]">·</span>
+          <time className="text-[13px] text-[#6b7280] whitespace-nowrap">
             {item.createdAt}
           </time>
 
-          {/* Action menu with permission explanations */}
+          {/* Action menu */}
           <div className="ml-auto">
             <PostActionMenu
               canEdit={canEditPost}
@@ -109,14 +108,14 @@ export function FeedItemCard({
 
         {/* Text */}
         {item.text && (
-          <p className="text-text-body leading-relaxed whitespace-pre-wrap mt-2">
+          <p className="text-[#e5e7eb] text-[15px] leading-relaxed whitespace-pre-wrap mt-1">
             {item.text}
           </p>
         )}
 
         {/* Media */}
         {item.media?.length ? (
-          <div className="mt-4 space-y-3">
+          <div className="mt-3 space-y-3">
             {item.media.map((m, i) => {
               if (m.type === "image") {
                 return (
@@ -124,7 +123,7 @@ export function FeedItemCard({
                     key={i}
                     src={m.src}
                     alt={m.title ?? ""}
-                    className="w-full rounded-xl border border-surface-highlight object-cover"
+                    className="w-full rounded-lg object-cover"
                   />
                 );
               }
@@ -136,13 +135,13 @@ export function FeedItemCard({
                     href={m.src}
                     target="_blank"
                     rel="noopener noreferrer"
-                    className="block p-4 rounded-xl bg-surface-highlight/20 border border-surface-highlight hover:bg-surface-highlight/40 transition-colors"
+                    className="block p-3 rounded-lg bg-[#242938] border border-[#2a3142] hover:bg-[#2a3142] transition-colors"
                   >
                     <div className="text-sm font-medium text-white truncate">
                       {m.title ?? m.domain ?? m.src}
                     </div>
                     {m.domain && (
-                      <div className="text-xs text-text-muted/70 mt-1">
+                      <div className="text-xs text-[#6b7280] mt-0.5">
                         {m.domain}
                       </div>
                     )}
@@ -155,51 +154,54 @@ export function FeedItemCard({
           </div>
         ) : null}
 
-        {/* Footer actions */}
-        <footer className="mt-5 pt-3 border-t border-surface-highlight/50 flex items-center gap-4">
-            {/* Reply button with disabled state explanation */}
+        {/* Footer actions - icon based */}
+        <footer className="mt-3 flex items-center gap-3">
+            {/* Reply/Share icon with tooltip */}
             {!isResponse && onActiveReplyIdChange && (
                 replyDisabledReason ? (
                   <Tooltip content={replyDisabledReason}>
                     <button
                       disabled
-                      className="text-sm text-text-muted/40 cursor-not-allowed"
+                      className="text-[#4b5563] cursor-not-allowed p-1"
+                      aria-label={`Reply${replyCount > 0 ? ` (${replyCount} replies)` : ''}`}
                     >
-                      Reply{replyCount > 0 ? ` (${replyCount})` : ''}
+                      <svg className="size-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5}>
+                        <path strokeLinecap="round" strokeLinejoin="round" d="M9 8.25H7.5a2.25 2.25 0 00-2.25 2.25v9a2.25 2.25 0 002.25 2.25h9a2.25 2.25 0 002.25-2.25v-9a2.25 2.25 0 00-2.25-2.25H15m0-3l-3-3m0 0l-3 3m3-3V15" />
+                      </svg>
                     </button>
                   </Tooltip>
                 ) : (
                   <button
                     onClick={() => onActiveReplyIdChange(isReplying ? null : item.assertionId)}
                     disabled={isPublishing}
-                    className="text-sm text-text-muted hover:text-white transition-colors disabled:opacity-50 disabled:cursor-not-allowed focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-primary/50 focus-visible:ring-offset-2 focus-visible:ring-offset-surface-dark rounded-sm"
+                    className="text-[#6b7280] hover:text-[#3b82f6] transition-colors p-1 disabled:opacity-50 disabled:cursor-not-allowed focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#3b82f6]/50 rounded"
+                    aria-label={isReplying ? "Cancel reply" : `Reply${replyCount > 0 ? ` (${replyCount} replies)` : ''}`}
                   >
-                    {isReplying ? "Cancel" : `Reply${replyCount > 0 ? ` (${replyCount})` : ''}`}
+                    <svg className="size-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5}>
+                      <path strokeLinecap="round" strokeLinejoin="round" d="M9 8.25H7.5a2.25 2.25 0 00-2.25 2.25v9a2.25 2.25 0 002.25 2.25h9a2.25 2.25 0 002.25-2.25v-9a2.25 2.25 0 00-2.25-2.25H15m0-3l-3-3m0 0l-3 3m3-3V15" />
+                    </svg>
                   </button>
                 )
             )}
         </footer>
-        
+
         {isReplying && replyComposer && (
-            <div className="mt-4 pt-4 border-t border-surface-highlight/50">
+            <div className="mt-3 pt-3 border-t border-[#2a3142]">
                 <ComposerSkeleton composer={replyComposer} autoFocus />
             </div>
         )}
 
-        {/* Thread Navigation - all roots link to thread view */}
+        {/* Thread Navigation - subtle link */}
         {!isResponse && (
-            <div className="mt-4">
-               <Link
-                 to="/thread/$assertionId"
-                 params={{ assertionId: item.assertionId }}
-                 className="text-sm text-brand-primary hover:text-brand-light transition-colors inline-flex items-center gap-1.5 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-primary/50 focus-visible:ring-offset-2 focus-visible:ring-offset-surface-dark rounded-sm"
-               >
-                   {item.responses && item.responses.length > 0
-                     ? `View thread (${item.responses.length} ${item.responses.length === 1 ? 'reply' : 'replies'})`
-                     : 'View thread'}
-                   <span aria-hidden="true">&rarr;</span>
-               </Link>
-            </div>
+            <Link
+              to="/thread/$assertionId"
+              params={{ assertionId: item.assertionId }}
+              className="mt-3 text-[13px] text-[#6b7280] hover:text-[#3b82f6] transition-colors inline-flex items-center gap-1 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#3b82f6]/50 rounded"
+            >
+                {item.responses && item.responses.length > 0
+                  ? `View thread · ${item.responses.length} ${item.responses.length === 1 ? 'reply' : 'replies'}`
+                  : 'View thread'}
+            </Link>
         )}
       </div>
     </article>

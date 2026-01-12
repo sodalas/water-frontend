@@ -1,5 +1,5 @@
 function SkeletonBlock({ className = "" }: { className?: string }) {
-  return <div className={`bg-surface-highlight/60 rounded ${className}`} />;
+  return <div className={`bg-[#242938] rounded ${className}`} />;
 }
 
 export default SkeletonBlock;

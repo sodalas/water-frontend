@@ -116,11 +116,10 @@ export function ThreadPage() {
   if (status === "idle" || status === "loading") {
     return (
       <main className="mx-auto max-w-2xl px-6 py-12">
-        <div className="animate-pulse space-y-6">
-          <div className="h-36 bg-surface-highlight/60 rounded-2xl" />
-          <div className="h-px bg-surface-highlight/40" />
-          <div className="h-28 bg-surface-highlight/40 rounded-2xl" />
-          <div className="h-28 bg-surface-highlight/40 rounded-2xl" />
+        <div className="animate-pulse space-y-4">
+          <div className="h-32 bg-[#242938] rounded-xl" />
+          <div className="h-24 bg-[#1e2330] rounded-xl" />
+          <div className="h-24 bg-[#1e2330] rounded-xl" />
         </div>
       </main>
     );
@@ -129,11 +128,11 @@ export function ThreadPage() {
   if (status === "not_found") {
     return (
       <main className="mx-auto max-w-2xl px-6 py-12 text-center">
-        <h1 className="text-2xl font-bold text-white mb-4">Thread Not Found</h1>
-        <p className="text-text-muted mb-8">
+        <h1 className="text-xl font-bold text-white mb-3">Thread Not Found</h1>
+        <p className="text-[#6b7280] mb-6">
           This thread may have been deleted or is not visible to you.
         </p>
-        <Link to="/app" className="text-brand-primary hover:text-brand-light">
+        <Link to="/app" className="text-[#3b82f6] hover:text-[#60a5fa]">
           Return to Feed
         </Link>
       </main>
@@ -143,9 +142,9 @@ export function ThreadPage() {
   if (status === "error") {
     return (
       <main className="mx-auto max-w-2xl px-6 py-12 text-center">
-        <h1 className="text-2xl font-bold text-white mb-4">Error Loading Thread</h1>
-        <p className="text-text-muted mb-8">{error}</p>
-        <Link to="/app" className="text-brand-primary hover:text-brand-light">
+        <h1 className="text-xl font-bold text-white mb-3">Error Loading Thread</h1>
+        <p className="text-[#6b7280] mb-6">{error}</p>
+        <Link to="/app" className="text-[#3b82f6] hover:text-[#60a5fa]">
           Return to Feed
         </Link>
       </main>
@@ -161,7 +160,7 @@ export function ThreadPage() {
       {/* Back link */}
       <Link
         to="/app"
-        className="inline-flex items-center gap-2 text-text-muted hover:text-white mb-8 transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-primary/50 focus-visible:ring-offset-2 focus-visible:ring-offset-[#0b0f14] rounded-sm"
+        className="inline-flex items-center gap-2 text-[#6b7280] hover:text-white mb-6 transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#3b82f6]/50 rounded"
       >
         <span aria-hidden="true">&larr;</span>
         <span>Back to Feed</span>
@@ -187,16 +186,16 @@ export function ThreadPage() {
 
       {/* Responses Section */}
       {responses.length > 0 && (
-        <div className="mt-8">
-          <div className="text-sm text-text-muted/80 mb-5 flex items-center gap-3">
-            <span className="w-8 border-t border-surface-highlight/60" aria-hidden="true" />
-            <span className="font-medium">
+        <div className="mt-6">
+          <div className="text-[13px] text-[#6b7280] mb-4 flex items-center gap-3">
+            <span className="w-6 border-t border-[#2a3142]" aria-hidden="true" />
+            <span>
               {responses.length} {responses.length === 1 ? "reply" : "replies"}
             </span>
-            <span className="flex-1 border-t border-surface-highlight/60" aria-hidden="true" />
+            <span className="flex-1 border-t border-[#2a3142]" aria-hidden="true" />
           </div>
 
-          <div className="space-y-4 border-l-2 border-surface-highlight/50 pl-5 ml-1">
+          <div className="space-y-3 border-l border-[#2a3142] pl-4 ml-1">
             {responses.map((response) => (
               <ThreadItem
                 key={response.assertionId}
@@ -226,13 +225,13 @@ export function ThreadPage() {
 
       {/* Empty state for threads with no replies */}
       {responses.length === 0 && (
-        <div className="mt-10 text-center">
+        <div className="mt-8 text-center">
           <div
-            className="size-12 rounded-full bg-surface-highlight/30 flex items-center justify-center mx-auto mb-4"
+            className="size-10 rounded-full bg-[#242938] flex items-center justify-center mx-auto mb-3"
             aria-hidden="true"
           >
             <svg
-              className="size-6 text-text-muted/60"
+              className="size-5 text-[#4b5563]"
               fill="none"
               viewBox="0 0 24 24"
               stroke="currentColor"
@@ -245,9 +244,9 @@ export function ThreadPage() {
               />
             </svg>
           </div>
-          <p className="text-text-muted/80 text-sm">No replies yet.</p>
+          <p className="text-[#6b7280] text-sm">No replies yet.</p>
           {isAuthenticated && (
-            <p className="text-text-muted/60 text-xs mt-1">Be the first to reply!</p>
+            <p className="text-[#4b5563] text-xs mt-1">Be the first to reply!</p>
           )}
         </div>
       )}
@@ -294,7 +293,7 @@ function ThreadItem({
   const canEditItem = canEdit(viewerId, item.author.id, viewerRole);
   const canDeleteItem = canDelete(viewerId, item.author.id, viewerRole);
 
-  // Phase D.1: Determine disabled reasons for non-authenticated users
+  // Determine disabled reasons for non-authenticated users
   const editDisabledReason = !isAuthenticated
     ? "Sign in to edit"
     : !canEditItem
@@ -314,10 +313,10 @@ function ThreadItem({
   return (
     <article
       className={`
-        bg-surface-dark border rounded-2xl p-5 flex gap-4 transition-colors
+        bg-[#1a1f2e] border rounded-xl p-4 flex gap-3
         ${isRoot
-          ? "border-brand-primary/30 shadow-lg shadow-brand-primary/5"
-          : "border-surface-highlight/60 hover:border-surface-highlight"
+          ? "border-[#3b82f6]/30"
+          : "border-[#2a3142]"
         }
       `}
     >
@@ -327,27 +326,27 @@ function ThreadItem({
           <img
             src={item.author.avatarUrl}
             alt={name}
-            className={`rounded-full object-cover ${isRoot ? "size-12 ring-2 ring-brand-primary/20" : "size-10 ring-1 ring-surface-highlight/50"}`}
+            className={`rounded-full object-cover ${isRoot ? "size-11" : "size-10"}`}
           />
         ) : (
           <div
-            className={`rounded-full bg-surface-highlight ${
-              isRoot ? "size-12 ring-2 ring-brand-primary/20" : "size-10 ring-1 ring-surface-highlight/50"
+            className={`rounded-full bg-[#2a3142] ${
+              isRoot ? "size-11" : "size-10"
             }`}
           />
         )}
       </div>
 
       <div className="flex flex-col flex-1 min-w-0">
-        <header className="flex items-center gap-2 mb-1">
-          <span className={`font-semibold text-white truncate ${isRoot ? "text-lg" : ""}`}>
+        <header className="flex items-center gap-1.5 mb-0.5">
+          <span className={`font-semibold text-white truncate ${isRoot ? "text-[15px]" : "text-[14px]"}`}>
             {name}
           </span>
           {handle && (
-            <span className="text-sm text-text-muted truncate">@{handle}</span>
+            <span className="text-[13px] text-[#6b7280] truncate">@{handle}</span>
           )}
-          <span className="text-xs text-text-muted/60">·</span>
-          <time className="text-sm text-text-muted/80 whitespace-nowrap">
+          <span className="text-[13px] text-[#4b5563]">·</span>
+          <time className="text-[13px] text-[#6b7280] whitespace-nowrap">
             {item.createdAt}
           </time>
 
@@ -364,17 +363,12 @@ function ThreadItem({
           </div>
         </header>
 
-        {/* Root indicator */}
-        {isRoot && (
-          <div className="text-xs text-brand-primary/90 mb-2 font-medium tracking-wide uppercase">
-            Thread
-          </div>
-        )}
+        {/* Root indicator - removed for cleaner look like screenshot */}
 
         {/* Text */}
         {item.text && (
-          <p className={`text-text-body leading-relaxed whitespace-pre-wrap ${
-            isRoot ? "text-base mt-1" : "text-sm mt-1"
+          <p className={`text-[#e5e7eb] leading-relaxed whitespace-pre-wrap ${
+            isRoot ? "text-[15px] mt-1" : "text-[14px] mt-1"
           }`}>
             {item.text}
           </p>
@@ -382,7 +376,7 @@ function ThreadItem({
 
         {/* Media */}
         {item.media?.length ? (
-          <div className="mt-4 space-y-3">
+          <div className="mt-3 space-y-3">
             {item.media.map((m, i) => {
               if (m.type === "image") {
                 return (
@@ -390,7 +384,7 @@ function ThreadItem({
                     key={i}
                     src={m.src}
                     alt={m.title ?? ""}
-                    className="w-full rounded-xl border border-surface-highlight object-cover"
+                    className="w-full rounded-lg object-cover"
                   />
                 );
               }
@@ -401,13 +395,13 @@ function ThreadItem({
                     href={m.src}
                     target="_blank"
                     rel="noopener noreferrer"
-                    className="block p-4 rounded-xl bg-surface-highlight/20 border border-surface-highlight hover:bg-surface-highlight/40 transition-colors"
+                    className="block p-3 rounded-lg bg-[#242938] border border-[#2a3142] hover:bg-[#2a3142] transition-colors"
                   >
                     <div className="text-sm font-medium text-white truncate">
                       {m.title ?? m.domain ?? m.src}
                     </div>
                     {m.domain && (
-                      <div className="text-xs text-text-muted/70 mt-1">
+                      <div className="text-xs text-[#6b7280] mt-0.5">
                         {m.domain}
                       </div>
                     )}
@@ -419,32 +413,38 @@ function ThreadItem({
           </div>
         ) : null}
 
-        {/* Footer actions */}
-        <footer className="mt-5 pt-3 border-t border-surface-highlight/50 flex items-center gap-4">
+        {/* Footer actions - icon based */}
+        <footer className="mt-3 flex items-center gap-3">
           {/* Reply button with tooltip for disabled state */}
           {replyDisabledReason ? (
             <Tooltip content={replyDisabledReason}>
               <button
                 disabled
-                className="text-sm text-text-muted/40 cursor-not-allowed"
+                className="text-[#4b5563] cursor-not-allowed p-1"
+                aria-label="Reply"
               >
-                Reply
+                <svg className="size-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5}>
+                  <path strokeLinecap="round" strokeLinejoin="round" d="M9 8.25H7.5a2.25 2.25 0 00-2.25 2.25v9a2.25 2.25 0 002.25 2.25h9a2.25 2.25 0 002.25-2.25v-9a2.25 2.25 0 00-2.25-2.25H15m0-3l-3-3m0 0l-3 3m3-3V15" />
+                </svg>
               </button>
             </Tooltip>
           ) : (
             <button
               onClick={onReplyToggle}
               disabled={isPublishing}
-              className="text-sm text-text-muted hover:text-white transition-colors disabled:opacity-50 disabled:cursor-not-allowed focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-primary/50 focus-visible:ring-offset-2 focus-visible:ring-offset-surface-dark rounded-sm"
+              className="text-[#6b7280] hover:text-[#3b82f6] transition-colors p-1 disabled:opacity-50 disabled:cursor-not-allowed focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#3b82f6]/50 rounded"
+              aria-label={isReplyActive ? "Cancel reply" : "Reply"}
             >
-              {isReplyActive ? "Cancel" : "Reply"}
+              <svg className="size-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5}>
+                <path strokeLinecap="round" strokeLinejoin="round" d="M9 8.25H7.5a2.25 2.25 0 00-2.25 2.25v9a2.25 2.25 0 002.25 2.25h9a2.25 2.25 0 002.25-2.25v-9a2.25 2.25 0 00-2.25-2.25H15m0-3l-3-3m0 0l-3 3m3-3V15" />
+              </svg>
             </button>
           )}
         </footer>
 
         {/* Reply composer */}
         {isReplyActive && replyComposer && (
-          <div className="mt-4 pt-4 border-t border-surface-highlight/50">
+          <div className="mt-3 pt-3 border-t border-[#2a3142]">
             <ReplyComposer composer={replyComposer} autoFocus />
           </div>
         )}

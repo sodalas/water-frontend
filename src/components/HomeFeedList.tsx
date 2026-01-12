@@ -27,11 +27,11 @@ export function HomeFeedList({ items, viewerId, viewerRole, activeReplyId, onAct
         className="flex flex-col items-center justify-center text-center py-16"
       >
         <div
-          className="size-14 rounded-full bg-surface-highlight/30 flex items-center justify-center mb-5"
+          className="size-12 rounded-full bg-[#242938] flex items-center justify-center mb-4"
           aria-hidden="true"
         >
           <svg
-            className="size-7 text-text-muted/60"
+            className="size-6 text-[#4b5563]"
             fill="none"
             viewBox="0 0 24 24"
             stroke="currentColor"
@@ -44,8 +44,8 @@ export function HomeFeedList({ items, viewerId, viewerRole, activeReplyId, onAct
             />
           </svg>
         </div>
-        <p className="text-text-muted text-sm">No posts yet.</p>
-        <p className="text-text-muted/60 text-xs mt-1">Be the first to share something.</p>
+        <p className="text-[#6b7280] text-sm">No posts yet.</p>
+        <p className="text-[#4b5563] text-xs mt-1">Be the first to share something.</p>
       </section>
     );
   }

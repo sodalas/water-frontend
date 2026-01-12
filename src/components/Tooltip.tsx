@@ -38,9 +38,9 @@ export function Tooltip({ content, children, position = "top" }: TooltipProps) {
       <div
         role="tooltip"
         className={`
-          absolute z-50 px-2.5 py-1.5 text-xs
-          bg-surface-dark border border-surface-highlight
-          text-text-muted rounded-lg shadow-xl
+          absolute z-50 px-2 py-1 text-xs
+          bg-[#1a1f2e] border border-[#2a3142]
+          text-[#9ca3af] rounded-md shadow-lg
           whitespace-nowrap pointer-events-none
           transition-opacity duration-150
           ${positionClasses[position]}

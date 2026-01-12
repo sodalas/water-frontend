@@ -66,7 +66,7 @@ export function ConfirmDialog({
       ? "bg-red-600 hover:bg-red-500 text-white focus-visible:ring-red-500"
       : variant === "warning"
       ? "bg-yellow-600 hover:bg-yellow-500 text-white focus-visible:ring-yellow-500"
-      : "bg-brand-primary hover:bg-brand-light text-white focus-visible:ring-brand-primary";
+      : "bg-[#3b82f6] hover:bg-[#2563eb] text-white focus-visible:ring-[#3b82f6]";
 
   return (
     <div
@@ -77,7 +77,7 @@ export function ConfirmDialog({
     >
       {/* Backdrop */}
       <div
-        className="absolute inset-0 bg-black/70 backdrop-blur-sm"
+        className="absolute inset-0 bg-black/70"
         onClick={onCancel}
         aria-hidden="true"
       />
@@ -85,27 +85,27 @@ export function ConfirmDialog({
       {/* Dialog */}
       <div
         ref={dialogRef}
-        className="relative bg-surface-dark border border-surface-highlight rounded-2xl p-6 max-w-md w-full mx-4 shadow-2xl"
+        className="relative bg-[#1a1f2e] border border-[#2a3142] rounded-xl p-5 max-w-sm w-full mx-4 shadow-2xl"
       >
         <h2
           id="dialog-title"
-          className="text-lg font-semibold text-white mb-2"
+          className="text-base font-semibold text-white mb-2"
         >
           {title}
         </h2>
-        <p className="text-text-muted leading-relaxed mb-6">{message}</p>
+        <p className="text-[#9ca3af] text-sm leading-relaxed mb-5">{message}</p>
 
-        <div className="flex gap-3 justify-end">
+        <div className="flex gap-2 justify-end">
           <button
             onClick={onCancel}
-            className="px-4 py-2 text-sm text-text-muted hover:text-white border border-surface-highlight hover:border-surface-highlight/80 rounded-lg transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-primary/50 focus-visible:ring-offset-2 focus-visible:ring-offset-surface-dark"
+            className="px-3 py-1.5 text-sm text-[#9ca3af] hover:text-white border border-[#2a3142] hover:border-[#3b4252] rounded-lg transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#3b82f6]/50"
           >
             {cancelLabel}
           </button>
           <button
             ref={confirmButtonRef}
             onClick={onConfirm}
-            className={`px-4 py-2 text-sm rounded-lg transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-offset-2 focus-visible:ring-offset-surface-dark ${confirmButtonClass}`}
+            className={`px-3 py-1.5 text-sm rounded-lg transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-offset-2 focus-visible:ring-offset-[#1a1f2e] ${confirmButtonClass}`}
           >
             {confirmLabel}
           </button>

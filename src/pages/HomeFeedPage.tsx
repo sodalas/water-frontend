@@ -179,13 +179,16 @@ export function HomeFeedPage() {
   };
 
   return (
-    <main aria-label="Home feed page">
-      <ComposerSkeleton composer={wrappedMainComposer} />
-      
-      <button type="button" onClick={handleRefresh}>
-        Refresh
-      </button>
+    <main className="mx-auto max-w-2xl px-4 py-6" aria-label="Home feed page">
+      {/* Composer */}
+      <div className="mb-4">
+        <ComposerSkeleton
+          composer={wrappedMainComposer}
+          avatarUrl={session?.user?.image}
+        />
+      </div>
 
+      {/* Feed */}
       <HomeFeedContainer
         status={status}
         items={items}
