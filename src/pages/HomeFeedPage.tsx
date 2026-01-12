@@ -8,6 +8,7 @@ import { ComposerSkeleton } from "../components/ComposerSkeleton";
 import { authClient } from "../lib/auth-client";
 import { getUserRole } from "../domain/permissions/UserRole";
 import { notifyConflict } from "../domain/notifications/notifyConflict";
+import { setSentryUser, captureError, addBreadcrumb } from "../components/SentryErrorBoundary";
 
 export function HomeFeedPage() {
   const { data: session, isLoading, isPending } = authClient.useSession();
@@ -32,6 +33,19 @@ export function HomeFeedPage() {
   useEffect(() => {
     setRevisingId(null);
   }, [viewerId]);
+
+  // Phase E.0: Set Sentry user context when session changes
+  useEffect(() => {
+    if (session?.user) {
+      setSentryUser({
+        id: session.user.id,
+        email: session.user.email,
+        name: session.user.name,
+      });
+    } else {
+      setSentryUser(null);
+    }
+  }, [session?.user]);
 
   // Main Composer: Optimistic Prepend + Revision Support + 409 Conflict Handling
   const wrappedMainComposer = useMemo(() => {
@@ -150,6 +164,9 @@ export function HomeFeedPage() {
       return;
     }
 
+    // Phase E.0: Add breadcrumb for delete attempt
+    addBreadcrumb("feed", "Starting delete", { assertionId, viewerId });
+
     try {
       const response = await fetch(`/api/assertions/${assertionId}`, {
         method: "DELETE",
@@ -174,6 +191,14 @@ export function HomeFeedPage() {
       refresh();
     } catch (error) {
       console.error("[Phase C] Delete failed:", error);
+      // Phase E.0: Capture delete errors to Sentry
+      if (error instanceof Error) {
+        captureError(error, {
+          operation: "delete",
+          assertionId,
+          route: "/api/assertions/:id",
+        });
+      }
       alert(`Failed to delete: ${error instanceof Error ? error.message : "Unknown error"}`);
     }
   };

@@ -1,5 +1,6 @@
 import { useReducer, useCallback, useRef, useEffect } from "react";
 import { Draft } from "../../infrastructure/draft/Draft";
+import { captureError, addBreadcrumb } from "../../components/SentryErrorBoundary";
 
 export type MediaItem = {
   id: string;
@@ -280,6 +281,14 @@ export function useComposer(viewerId: string) {
 
       dispatch({ type: "PUBLISH_START" });
 
+      // Phase E.0: Add breadcrumb for publish attempt
+      addBreadcrumb("composer", "Starting publish", {
+        viewerId,
+        hasSupersedes: !!options?.supersedesId,
+        hasReplyTo: !!options?.replyTo,
+        assertionType: options?.articleTitle ? "article" : options?.replyTo ? "response" : "note",
+      });
+
       try {
         // Determine assertion type
         let assertionType = "note";
@@ -341,6 +350,16 @@ export function useComposer(viewerId: string) {
       } catch (err) {
         console.error("Publish error:", err);
         const errorMessage = err instanceof Error ? err.message : "Failed to publish";
+
+        // Phase E.0: Capture publish errors to Sentry
+        if (err instanceof Error) {
+          captureError(err, {
+            operation: options?.supersedesId ? "revision" : "publish",
+            assertionId: options?.supersedesId || options?.replyTo,
+            route: "/api/publish",
+          });
+        }
+
         dispatch({ type: "PUBLISH_ERROR", error: errorMessage });
         return null;
       }

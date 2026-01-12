@@ -11,6 +11,7 @@
     "check:reading-canon": "bash ./scripts/check-reading-canon.sh"
   },
   "dependencies": {
+    "@sentry/react": "^10.33.0",
     "@tanstack/react-query": "^5.90.12",
     "@tanstack/react-router": "^1.143.6",
     "better-auth": "^1.4.9",
