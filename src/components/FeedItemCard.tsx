@@ -12,6 +12,7 @@ import type { FeedItemView } from "./feed/types";
 import { ComposerSkeleton } from "./ComposerSkeleton";
 import { PostActionMenu } from "./PostActionMenu";
 import { Tooltip } from "./Tooltip";
+import { ReactionBar } from "./ReactionBar";
 import type { UserRole } from "../domain/permissions/UserRole";
 import { canEdit, canDelete } from "../domain/permissions/UserRole";
 
@@ -183,6 +184,12 @@ export function FeedItemCard({
                   </button>
                 )
             )}
+
+            {/* Phase E.1: Reaction buttons */}
+            <ReactionBar
+              assertionId={item.assertionId}
+              isAuthenticated={isAuthenticated}
+            />
         </footer>
 
         {isReplying && replyComposer && (
