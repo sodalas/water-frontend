@@ -1,10 +1,10 @@
 /**
- * Thread Page with Full Interaction Surface
+ * Thread Page with Full Interaction Surface (Canon-Aligned)
  *
- * - Thread root clearly distinguished from replies
- * - Reply affordances with proper targeting
- * - Edit/Delete with permission checks and confirmation
- * - Visual hierarchy for nested replies
+ * Canon compliance:
+ * - No client-derived counts (removed reply count display)
+ * - isThreadOrigin naming reflects thread structure, not hierarchy
+ * - All assertions in thread expose identical interaction surface
  */
 
 import { useEffect, useState } from "react";
@@ -169,7 +169,7 @@ export function ThreadPage() {
       {/* Thread Root - Distinguished styling */}
       <ThreadItem
         item={root}
-        isRoot
+        isThreadOrigin
         viewerId={viewerId}
         viewerRole={viewerRole}
         isAuthenticated={isAuthenticated}
@@ -184,14 +184,12 @@ export function ThreadPage() {
         onDelete={() => handleDelete(root.assertionId)}
       />
 
-      {/* Responses Section */}
+      {/* Responses Section - Canon: no client-derived counts */}
       {responses.length > 0 && (
         <div className="mt-6">
           <div className="text-[13px] text-[#6b7280] mb-4 flex items-center gap-3">
             <span className="w-6 border-t border-[#2a3142]" aria-hidden="true" />
-            <span>
-              {responses.length} {responses.length === 1 ? "reply" : "replies"}
-            </span>
+            <span>Replies</span>
             <span className="flex-1 border-t border-[#2a3142]" aria-hidden="true" />
           </div>
 
@@ -200,7 +198,7 @@ export function ThreadPage() {
               <ThreadItem
                 key={response.assertionId}
                 item={response}
-                isRoot={false}
+                isThreadOrigin={false}
                 viewerId={viewerId}
                 viewerRole={viewerRole}
                 isAuthenticated={isAuthenticated}
@@ -259,7 +257,7 @@ export function ThreadPage() {
  */
 interface ThreadItemProps {
   item: FeedItemView;
-  isRoot: boolean;
+  isThreadOrigin: boolean;
   viewerId: string;
   viewerRole: ReturnType<typeof getUserRole>;
   isAuthenticated: boolean;
@@ -272,7 +270,7 @@ interface ThreadItemProps {
 
 function ThreadItem({
   item,
-  isRoot,
+  isThreadOrigin,
   viewerId,
   viewerRole,
   isAuthenticated,
@@ -314,7 +312,7 @@ function ThreadItem({
     <article
       className={`
         bg-[#1a1f2e] border rounded-xl p-4 flex gap-3
-        ${isRoot
+        ${isThreadOrigin
           ? "border-[#3b82f6]/30"
           : "border-[#2a3142]"
         }
@@ -326,12 +324,12 @@ function ThreadItem({
           <img
             src={item.author.avatarUrl}
             alt={name}
-            className={`rounded-full object-cover ${isRoot ? "size-11" : "size-10"}`}
+            className={`rounded-full object-cover ${isThreadOrigin ? "size-11" : "size-10"}`}
           />
         ) : (
           <div
             className={`rounded-full bg-[#2a3142] ${
-              isRoot ? "size-11" : "size-10"
+              isThreadOrigin ? "size-11" : "size-10"
             }`}
           />
         )}
@@ -339,7 +337,7 @@ function ThreadItem({
 
       <div className="flex flex-col flex-1 min-w-0">
         <header className="flex items-center gap-1.5 mb-0.5">
-          <span className={`font-semibold text-white truncate ${isRoot ? "text-[15px]" : "text-[14px]"}`}>
+          <span className={`font-semibold text-white truncate ${isThreadOrigin ? "text-[15px]" : "text-[14px]"}`}>
             {name}
           </span>
           {handle && (
@@ -368,7 +366,7 @@ function ThreadItem({
         {/* Text */}
         {item.text && (
           <p className={`text-[#e5e7eb] leading-relaxed whitespace-pre-wrap ${
-            isRoot ? "text-[15px] mt-1" : "text-[14px] mt-1"
+            isThreadOrigin ? "text-[15px] mt-1" : "text-[14px] mt-1"
           }`}>
             {item.text}
           </p>

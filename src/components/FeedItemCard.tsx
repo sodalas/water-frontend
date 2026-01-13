@@ -1,10 +1,10 @@
 /**
- * FeedItemCard with Full Interaction Surface
+ * FeedItemCard with Full Interaction Surface (Canon-Aligned)
  *
- * - Thread navigation for all root posts
- * - Reply affordances with proper targeting
- * - Edit/Delete with permission checks and explanations
- * - Visual distinction for responses
+ * Canon compliance:
+ * - All assertions expose identical affordances (reply + thread navigation)
+ * - No client-derived counts (reply counts must come from backend if needed)
+ * - Optimistic items display provisional state via isPending
  */
 
 import { Link } from "@tanstack/react-router";
@@ -37,8 +37,6 @@ export function FeedItemCard({
 }) {
   const isReplying = activeReplyId === item.assertionId;
   const isPublishing = replyComposer?.status === 'publishing';
-  const isResponse = item.assertionType === 'response';
-  const replyCount = item.responses?.length ?? 0;
   const isAuthenticated = !!viewerId;
 
   // Permission checks for Edit/Delete visibility
@@ -93,6 +91,11 @@ export function FeedItemCard({
           <time className="text-[13px] text-[#6b7280] whitespace-nowrap">
             {item.createdAt}
           </time>
+
+          {/* Canon: Optimistic items are visually provisional */}
+          {item.isPending && (
+            <span className="text-xs text-[#6b7280] opacity-60 ml-1">(sending…)</span>
+          )}
 
           {/* Action menu */}
           <div className="ml-auto">
@@ -157,14 +160,14 @@ export function FeedItemCard({
 
         {/* Footer actions - icon based */}
         <footer className="mt-3 flex items-center gap-3">
-            {/* Reply/Share icon with tooltip */}
-            {!isResponse && onActiveReplyIdChange && (
+            {/* Reply icon with tooltip - Canon: all assertions expose reply affordance */}
+            {onActiveReplyIdChange && (
                 replyDisabledReason ? (
                   <Tooltip content={replyDisabledReason}>
                     <button
                       disabled
                       className="text-[#4b5563] cursor-not-allowed p-1"
-                      aria-label={`Reply${replyCount > 0 ? ` (${replyCount} replies)` : ''}`}
+                      aria-label="Reply"
                     >
                       <svg className="size-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5}>
                         <path strokeLinecap="round" strokeLinejoin="round" d="M9 8.25H7.5a2.25 2.25 0 00-2.25 2.25v9a2.25 2.25 0 002.25 2.25h9a2.25 2.25 0 002.25-2.25v-9a2.25 2.25 0 00-2.25-2.25H15m0-3l-3-3m0 0l-3 3m3-3V15" />
@@ -176,7 +179,7 @@ export function FeedItemCard({
                     onClick={() => onActiveReplyIdChange(isReplying ? null : item.assertionId)}
                     disabled={isPublishing}
                     className="text-[#6b7280] hover:text-[#3b82f6] transition-colors p-1 disabled:opacity-50 disabled:cursor-not-allowed focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#3b82f6]/50 rounded"
-                    aria-label={isReplying ? "Cancel reply" : `Reply${replyCount > 0 ? ` (${replyCount} replies)` : ''}`}
+                    aria-label={isReplying ? "Cancel reply" : "Reply"}
                   >
                     <svg className="size-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5}>
                       <path strokeLinecap="round" strokeLinejoin="round" d="M9 8.25H7.5a2.25 2.25 0 00-2.25 2.25v9a2.25 2.25 0 002.25 2.25h9a2.25 2.25 0 002.25-2.25v-9a2.25 2.25 0 00-2.25-2.25H15m0-3l-3-3m0 0l-3 3m3-3V15" />
@@ -198,18 +201,14 @@ export function FeedItemCard({
             </div>
         )}
 
-        {/* Thread Navigation - subtle link */}
-        {!isResponse && (
-            <Link
-              to="/thread/$assertionId"
-              params={{ assertionId: item.assertionId }}
-              className="mt-3 text-[13px] text-[#6b7280] hover:text-[#3b82f6] transition-colors inline-flex items-center gap-1 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#3b82f6]/50 rounded"
-            >
-                {item.responses && item.responses.length > 0
-                  ? `View thread · ${item.responses.length} ${item.responses.length === 1 ? 'reply' : 'replies'}`
-                  : 'View thread'}
-            </Link>
-        )}
+        {/* Thread Navigation - Canon: all assertions can be thread origins */}
+        <Link
+          to="/thread/$assertionId"
+          params={{ assertionId: item.assertionId }}
+          className="mt-3 text-[13px] text-[#6b7280] hover:text-[#3b82f6] transition-colors inline-flex items-center gap-1 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#3b82f6]/50 rounded"
+        >
+          View thread
+        </Link>
       </div>
     </article>
   );

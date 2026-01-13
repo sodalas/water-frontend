@@ -59,7 +59,8 @@ export function HomeFeedPage() {
             supersedesId: supersededId || undefined, // Phase B3.4-B: Include revision target
           });
           if (item) {
-            prepend(item);
+            // Canon: Mark optimistic items as provisional until backend confirms
+            prepend({ ...item, isPending: true });
             // Phase C Hardening: Optimistically remove superseded assertion by exact ID
             if (supersededId) {
               removeItem(supersededId);
@@ -92,7 +93,8 @@ export function HomeFeedPage() {
         // Opt-in to "tweet" behavior: clear draft after publish
         const item = await replyComposer.publish(session?.user, { replyTo: activeReplyId, clearDraft: true });
         if (item) {
-            addResponse(activeReplyId, item);
+            // Canon: Mark optimistic items as provisional until backend confirms
+            addResponse(activeReplyId, { ...item, isPending: true });
             setActiveReplyId(null);
         }
         return item;

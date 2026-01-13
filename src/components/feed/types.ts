@@ -24,4 +24,6 @@ export interface FeedItemView {
   text: string;
   media?: MediaItem[];
   responses?: FeedItemView[];
+  /** Canon: Optimistic items are visually provisional until backend confirms */
+  isPending?: boolean;
 }
