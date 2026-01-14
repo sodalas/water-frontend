@@ -3,6 +3,8 @@
  * * STRICT FEED VIEW TYPES (🟥 NO ANY)
  */
 
+import type { ReactionCounts } from '../../domain/reactions/types';
+
 export interface MediaItem {
   id: string;
   type: "image" | "link";
@@ -26,4 +28,6 @@ export interface FeedItemView {
   responses?: FeedItemView[];
   /** Canon: Optimistic items are visually provisional until backend confirms */
   isPending?: boolean;
+  /** Phase: Reaction Aggregation - counts from projection (per CONTRACTS.md §3.2) */
+  reactionCounts?: ReactionCounts;
 }

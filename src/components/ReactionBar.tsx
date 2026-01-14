@@ -3,17 +3,21 @@
  *
  * Displays reaction buttons (like, acknowledge) with counts.
  * Handles disabled states with tooltips when appropriate.
+ *
+ * Phase: Reaction Aggregation - accepts initial counts from projection data.
  */
 
 import { Tooltip } from './Tooltip';
 import { useReactions } from '../domain/reactions/useReactions';
-import type { ReactionType } from '../domain/reactions/types';
+import type { ReactionType, ReactionCounts } from '../domain/reactions/types';
 
 interface ReactionBarProps {
   assertionId: string;
   isAuthenticated: boolean;
   disabled?: boolean;
   disabledReason?: string;
+  /** Initial counts from projection data (avoids initial fetch) */
+  initialCounts?: ReactionCounts;
 }
 
 export function ReactionBar({
@@ -21,8 +25,12 @@ export function ReactionBar({
   isAuthenticated,
   disabled = false,
   disabledReason,
+  initialCounts,
 }: ReactionBarProps) {
-  const { counts, userReactions, toggleReaction, isLoading, isMutating } = useReactions(assertionId);
+  const { counts, userReactions, toggleReaction, isLoading, isMutating } = useReactions(
+    assertionId,
+    { initialCounts }
+  );
 
   const isDisabled = disabled || !isAuthenticated || isMutating;
   const tooltipReason = disabledReason || (!isAuthenticated ? 'Sign in to react' : undefined);

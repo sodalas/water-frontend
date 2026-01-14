@@ -192,6 +192,7 @@ export function FeedItemCard({
             <ReactionBar
               assertionId={item.assertionId}
               isAuthenticated={isAuthenticated}
+              initialCounts={item.reactionCounts}
             />
         </footer>
 
