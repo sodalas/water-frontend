@@ -9,6 +9,7 @@ import { authClient } from "../lib/auth-client";
 import { getUserRole } from "../domain/permissions/UserRole";
 import { notifyConflict } from "../domain/notifications/notifyConflict";
 import { setSentryUser, captureError, addBreadcrumb } from "../components/SentryErrorBoundary";
+import { useInfiniteScrollTrigger } from "../hooks/useInfiniteScrollTrigger";
 
 export function HomeFeedPage() {
   const { data: session, isLoading, isPending } = authClient.useSession();
@@ -22,7 +23,14 @@ export function HomeFeedPage() {
     return new HomeFeedAdapter();
   }, []);
 
-  const { status, items, error, refresh, prepend, addResponse, removeItem } = useHomeFeed(adapter, viewerId);
+  const { status, items, error, nextCursor, refresh, loadMore, prepend, addResponse, removeItem } = useHomeFeed(adapter, viewerId);
+
+  // Phase 8: Infinite scroll trigger
+  // Enable only when more items exist AND not currently loading
+  const sentinelRef = useInfiniteScrollTrigger({
+    onTrigger: loadMore,
+    enabled: !!nextCursor && status !== "loading",
+  });
   const mainComposer = useComposer(viewerId);
   const replyComposer = useComposer(viewerId);
 
@@ -230,6 +238,13 @@ export function HomeFeedPage() {
         replyComposer={wrappedReplyComposer}
         onEdit={handleEdit}
         onDelete={handleDelete}
+      />
+
+      {/* Phase 8: Infinite scroll sentinel */}
+      <div
+        ref={sentinelRef}
+        className="h-4"
+        aria-hidden="true"
       />
     </main>
   );
