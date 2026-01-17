@@ -5,9 +5,15 @@
  *
  * Uses IntersectionObserver (NOT scroll listeners) to detect when a sentinel
  * element becomes visible, triggering pagination without UI cursor logic.
+ *
+ * Hardening (v1.1):
+ * - In-flight guard prevents re-trigger storm during layout shifts
+ * - Observer detached when disabled (clearer intent, lower overhead)
+ * - Sentry breadcrumb for scroll behavior observability
  */
 
 import { useEffect, useRef, useCallback } from "react";
+import { addBreadcrumb } from "../components/SentryErrorBoundary";
 
 interface UseInfiniteScrollTriggerOptions {
   /**
@@ -59,19 +65,38 @@ export function useInfiniteScrollTrigger({
   rootMargin = "100px",
 }: UseInfiniteScrollTriggerOptions) {
   const sentinelRef = useRef<HTMLDivElement>(null);
+  // Issue 1 fix: In-flight guard prevents re-trigger storm during layout shifts
+  const isTriggeredRef = useRef(false);
 
   // Stable callback reference to avoid re-creating observer
   const handleIntersection = useCallback(
     (entries: IntersectionObserverEntry[]) => {
       const [entry] = entries;
-      if (entry.isIntersecting && enabled) {
-        onTrigger();
-      }
+      if (!entry.isIntersecting) return;
+      if (!enabled) return;
+      if (isTriggeredRef.current) return;
+
+      isTriggeredRef.current = true;
+      // Issue 3 fix: Sentry breadcrumb for scroll behavior observability
+      addBreadcrumb("feed", "Infinite scroll trigger fired", {
+        nextCursorPresent: true,
+      });
+      onTrigger();
     },
     [enabled, onTrigger]
   );
 
+  // Reset in-flight guard when enabled changes (after load completes)
   useEffect(() => {
+    if (enabled) {
+      isTriggeredRef.current = false;
+    }
+  }, [enabled]);
+
+  // Issue 2 fix: Observer exists only when enabled (clearer intent, lower overhead)
+  useEffect(() => {
+    if (!enabled) return;
+
     const sentinel = sentinelRef.current;
     if (!sentinel) return;
 
@@ -85,7 +110,7 @@ export function useInfiniteScrollTrigger({
     return () => {
       observer.disconnect();
     };
-  }, [handleIntersection, threshold, rootMargin]);
+  }, [enabled, handleIntersection, threshold, rootMargin]);
 
   return sentinelRef;
 }
