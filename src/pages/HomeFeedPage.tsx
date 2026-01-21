@@ -12,7 +12,7 @@ import { setSentryUser, captureError, addBreadcrumb } from "../components/Sentry
 import { useInfiniteScrollTrigger } from "../hooks/useInfiniteScrollTrigger";
 
 export function HomeFeedPage() {
-  const { data: session, isLoading, isPending } = authClient.useSession();
+  const { data: session, isPending } = authClient.useSession();
 
   // All hooks must be called unconditionally before any early returns
   const viewerId = session?.user?.id ?? "";
@@ -112,7 +112,7 @@ export function HomeFeedPage() {
 
   // Invariant 1: Auth presence on protected route
   // Wait for session to load (route guard ensures it exists)
-  if (isLoading || isPending || !session) {
+  if (isPending || !session) {
     return <div>Loading...</div>;
   }
 
@@ -122,10 +122,6 @@ export function HomeFeedPage() {
 
   // 🟥 Initial Load now handled automatically by useHomeFeed hook
   // (See FEED INITIAL FETCH DIRECTIVE in useHomeFeed.ts)
-
-  const handleRefresh = () => {
-    refresh();
-  };
 
   const handleItemPress = (assertionId: string) => {
     console.log("Navigate to assertion:", assertionId);

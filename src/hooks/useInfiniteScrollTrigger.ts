@@ -72,7 +72,13 @@ export function useInfiniteScrollTrigger({
   const handleIntersection = useCallback(
     (entries: IntersectionObserverEntry[]) => {
       const [entry] = entries;
-      if (!entry.isIntersecting) return;
+
+      // Reset guard when sentinel exits viewport, allowing re-trigger on re-entry
+      if (!entry.isIntersecting) {
+        isTriggeredRef.current = false;
+        return;
+      }
+
       if (!enabled) return;
       if (isTriggeredRef.current) return;
 

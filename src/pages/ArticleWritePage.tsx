@@ -32,11 +32,11 @@ import { useComposer } from "../domain/composer/useComposer";
 import { authClient } from "../lib/auth-client";
 
 export function ArticleWritePage() {
-  const { data: session, isLoading, isPending } = authClient.useSession();
+  const { data: session, isPending } = authClient.useSession();
 
   // Invariant 1: Auth presence on protected route
   // Wait for session to load (route guard ensures it exists)
-  if (isLoading || isPending || !session) {
+  if (isPending || !session) {
     return <div>Loading...</div>;
   }
 

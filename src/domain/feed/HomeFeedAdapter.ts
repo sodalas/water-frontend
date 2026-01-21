@@ -19,6 +19,8 @@ export interface FeedItem {
   visibility: string;
   replyTo?: string;
   responses?: FeedItem[];
+  /** Canon: Optimistic items are visually provisional until backend confirms */
+  isPending?: boolean;
 }
 
 // 🟥 VIOLATION #2 FIX: Discriminated union prevents impossible states at compile time

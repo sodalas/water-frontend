@@ -33,13 +33,13 @@ interface PostArticleCTAProps {
   };
 }
 
-export function PostArticleCTA({ context }: PostArticleCTAProps) {
+export function PostArticleCTA(_props: PostArticleCTAProps) {
   // 🟥 HIGH PRIORITY FIX: Use existing auth hook instead of duplicating fetch logic
   // Textbook: "useEffect allows for cleanup operations... by returning a cleanup function"
   const { data: session } = authClient.useSession();
   const isAuthenticated = !!session?.user;
 
-  const [isDismissed, setIsDismissed] = useState(false);
+  const [isDismissed] = useState(false);
 
   if (isDismissed) {
     return null;

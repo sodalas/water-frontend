@@ -4,7 +4,7 @@ import { useState, useEffect, useRef } from "react";
 import { UserActionMenu } from "./UserActionMenu";
 
 export function UserIdentity() {
-  const { data: session, isLoading } = authClient.useSession();
+  const { data: session, isPending } = authClient.useSession();
   const [open, setOpen] = useState(false);
   const containerRef = useRef<HTMLDivElement>(null);
 
@@ -22,7 +22,7 @@ export function UserIdentity() {
     return () => document.removeEventListener("mousedown", handleClickOutside);
   }, [open]);
 
-  if (isLoading || !session?.user) return null;
+  if (isPending || !session?.user) return null;
 
   return (
     <div className="relative" ref={containerRef}>
