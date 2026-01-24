@@ -21,6 +21,10 @@ export interface FeedItem {
   responses?: FeedItem[];
   /** Canon: Optimistic items are visually provisional until backend confirms */
   isPending?: boolean;
+  /** Phase: Reaction Aggregation - counts from projection */
+  reactionCounts?: { like: number; acknowledge: number };
+  /** Phase 12: Backend-authoritative response count */
+  responseCount?: number;
 }
 
 // 🟥 VIOLATION #2 FIX: Discriminated union prevents impossible states at compile time

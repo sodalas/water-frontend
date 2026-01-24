@@ -64,7 +64,10 @@ function toFeedItemView(item: FeedItem): FeedItemView {
     createdAt: item.createdAt,
     text: item.text,
     media: item.media,
-    responses: item.responses?.map(toFeedItemView)
+    responses: item.responses?.map(toFeedItemView),
+    reactionCounts: item.reactionCounts,
+    isPending: item.isPending,
+    responseCount: item.responseCount,
   };
 }
 

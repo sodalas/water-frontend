@@ -30,4 +30,6 @@ export interface FeedItemView {
   isPending?: boolean;
   /** Phase: Reaction Aggregation - counts from projection (per CONTRACTS.md §3.2) */
   reactionCounts?: ReactionCounts;
+  /** Phase 12: Backend-authoritative response count (CONTRACTS.md §4.1) */
+  responseCount?: number;
 }

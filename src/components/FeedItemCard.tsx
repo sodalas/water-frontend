@@ -8,6 +8,7 @@
  */
 
 import { Link } from "@tanstack/react-router";
+import { MessageSquare } from "lucide-react";
 import type { FeedItemView } from "./feed/types";
 import { ComposerSkeleton } from "./ComposerSkeleton";
 import { PostActionMenu } from "./PostActionMenu";
@@ -157,6 +158,18 @@ export function FeedItemCard({
             })}
           </div>
         ) : null}
+
+        {/* Phase 12: Thread indicator — backend-authoritative count */}
+        {item.responseCount != null && item.responseCount > 0 && (
+          <Link
+            to="/thread/$assertionId"
+            params={{ assertionId: item.assertionId }}
+            className="mt-3 flex items-center gap-1.5 text-sm text-[#8b949e] hover:text-[#58a6ff] transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#3b82f6]/50 rounded"
+          >
+            <MessageSquare className="size-4" />
+            <span>{item.responseCount} {item.responseCount === 1 ? 'reply' : 'replies'}</span>
+          </Link>
+        )}
 
         {/* Footer actions - icon based */}
         <footer className="mt-3 flex items-center gap-3">
