@@ -7,7 +7,7 @@
  * - All assertions in thread expose identical interaction surface
  */
 
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { useParams, Link, useNavigate } from "@tanstack/react-router";
 import { MessageSquare } from "lucide-react";
 import type { FeedItemView } from "../components/feed/types";
@@ -40,16 +40,46 @@ export function ThreadPage() {
   const [thread, setThread] = useState<ThreadData | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [activeReplyTarget, setActiveReplyTarget] = useState<string | null>(null);
+  const [optimisticReply, setOptimisticReply] = useState<FeedItemView | null>(null);
 
   // Reply composer
   const replyComposer = useReplyComposer({
     parentId: activeReplyTarget ?? "",
     onSuccess: () => {
       setActiveReplyTarget(null);
-      // Refresh thread data
+      setOptimisticReply(null);
+      // Refresh thread data to get authoritative version
       fetchThread();
     },
   });
+
+  // Phase 12: Optimistic reply insertion — watch composer status
+  const prevStatus = useRef(replyComposer.status);
+  useEffect(() => {
+    const prev = prevStatus.current;
+    prevStatus.current = replyComposer.status;
+
+    if (prev !== "publishing" && replyComposer.status === "publishing") {
+      // Insert optimistic reply
+      setOptimisticReply({
+        assertionId: `optimistic-${Date.now()}`,
+        assertionType: "response",
+        author: {
+          id: viewerId,
+          displayName: session?.user?.name ?? null,
+          handle: null,
+        },
+        createdAt: new Date().toISOString(),
+        text: replyComposer.text,
+        isPending: true,
+      });
+    }
+
+    if (prev === "publishing" && replyComposer.status === "error") {
+      // Remove optimistic reply on failure
+      setOptimisticReply(null);
+    }
+  }, [replyComposer.status]);
 
   const fetchThread = async () => {
     if (!assertionId) return;
@@ -157,6 +187,11 @@ export function ThreadPage() {
 
   const { root, responses } = thread;
 
+  // Phase 12: Merge optimistic reply into display list
+  const displayResponses = optimisticReply
+    ? [...responses, optimisticReply]
+    : responses;
+
   return (
     <main className="mx-auto max-w-2xl px-6 py-12">
       {/* Back link */}
@@ -186,8 +221,8 @@ export function ThreadPage() {
         onDelete={() => handleDelete(root.assertionId)}
       />
 
-      {/* Responses Section - Canon: no client-derived counts */}
-      {responses.length > 0 && (
+      {/* Responses Section */}
+      {displayResponses.length > 0 && (
         <div className="mt-6">
           <div className="text-[13px] text-[#6b7280] mb-4 flex items-center gap-3">
             <span className="w-6 border-t border-[#2a3142]" aria-hidden="true" />
@@ -196,7 +231,7 @@ export function ThreadPage() {
           </div>
 
           <div className="space-y-3 border-l border-[#2a3142] pl-4 ml-1">
-            {responses.map((response) => (
+            {displayResponses.map((response) => (
               <ThreadItem
                 key={response.assertionId}
                 item={response}
@@ -224,7 +259,7 @@ export function ThreadPage() {
       )}
 
       {/* Empty state for threads with no replies */}
-      {responses.length === 0 && (
+      {displayResponses.length === 0 && (
         <div className="mt-8 text-center">
           <div
             className="size-10 rounded-full bg-[#242938] flex items-center justify-center mx-auto mb-3"
