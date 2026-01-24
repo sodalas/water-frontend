@@ -2,6 +2,12 @@
 @tailwind components;
 @tailwind utilities;
 
+@layer base {
+  body {
+    @apply bg-[#0d1117] text-[#e6edf3] antialiased;
+  }
+}
+
 @media (prefers-color-scheme: dark) {
   :root {
     --reading-bg: #0b0f14;

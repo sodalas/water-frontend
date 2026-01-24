@@ -210,7 +210,7 @@ export function HomeFeedPage() {
   };
 
   return (
-    <main className="mx-auto max-w-2xl px-4 py-6" aria-label="Home feed page">
+    <main aria-label="Home feed page">
       {/* Composer */}
       <div className="mb-4">
         <ComposerSkeleton

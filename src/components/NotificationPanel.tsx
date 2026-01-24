@@ -13,7 +13,6 @@
 import { Bell, Loader2, Check } from "lucide-react";
 import type { Notification } from "../domain/notifications/types";
 import { Button } from "./ui/button";
-import { ScrollArea } from "./ui/scroll-area";
 import { NotificationItem } from "./NotificationItem";
 
 export interface NotificationPanelProps {
@@ -113,13 +112,13 @@ export function NotificationPanel({
         </div>
 
         {/* Content */}
-        <div className="max-h-[400px] overflow-hidden">
+        <div className="max-h-[400px] overflow-y-auto">
           {isLoading && notifications.length === 0 ? (
             <LoadingState />
           ) : notifications.length === 0 ? (
             <EmptyState />
           ) : (
-            <ScrollArea className="h-full max-h-[400px]">
+            <div>
               <div className="space-y-1 p-2">
                 {notifications.map((notification) => (
                   <NotificationItem
@@ -146,7 +145,7 @@ export function NotificationPanel({
                   </Button>
                 )}
               </div>
-            </ScrollArea>
+            </div>
           )}
         </div>
       </div>
