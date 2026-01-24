@@ -7,7 +7,7 @@
  * - All assertions in thread expose identical interaction surface
  */
 
-import { useEffect, useRef, useState } from "react";
+import { memo, useCallback, useEffect, useRef, useState } from "react";
 import { useParams, Link, useNavigate } from "@tanstack/react-router";
 import { MessageSquare } from "lucide-react";
 import type { FeedItemView } from "../components/feed/types";
@@ -48,8 +48,8 @@ export function ThreadPage() {
     onSuccess: () => {
       setActiveReplyTarget(null);
       setOptimisticReply(null);
-      // Refresh thread data to get authoritative version
-      fetchThread();
+      // Refresh thread data without showing loading skeleton
+      fetchThread(false);
     },
   });
 
@@ -81,10 +81,12 @@ export function ThreadPage() {
     }
   }, [replyComposer.status]);
 
-  const fetchThread = async () => {
+  const fetchThread = useCallback(async (showLoading = true) => {
     if (!assertionId) return;
 
-    setStatus("loading");
+    if (showLoading) {
+      setStatus("loading");
+    }
     setError(null);
 
     try {
@@ -108,21 +110,19 @@ export function ThreadPage() {
       setError(err.message);
       setStatus("error");
     }
-  };
-
-  useEffect(() => {
-    fetchThread();
   }, [assertionId]);
 
+  useEffect(() => {
+    fetchThread(true);
+  }, [fetchThread]);
+
   // Handle edit navigation
-  const handleEdit = (itemId: string) => {
-    // Navigate to edit mode (implementation depends on your edit flow)
-    // For now, navigate to home with edit state
+  const handleEdit = useCallback((itemId: string) => {
     navigate({ to: "/app", search: { edit: itemId } });
-  };
+  }, [navigate]);
 
   // Handle delete
-  const handleDelete = async (itemId: string) => {
+  const handleDelete = useCallback(async (itemId: string) => {
     try {
       const res = await fetch(`/api/assertions/${itemId}`, {
         method: "DELETE",
@@ -137,13 +137,18 @@ export function ThreadPage() {
       if (itemId === assertionId) {
         navigate({ to: "/app" });
       } else {
-        // Refresh thread
-        fetchThread();
+        // Refresh thread without loading skeleton
+        fetchThread(false);
       }
     } catch (err) {
       console.error("Delete error:", err);
     }
-  };
+  }, [assertionId, navigate, fetchThread]);
+
+  // Stable reply toggle handler
+  const handleReplyToggle = useCallback((targetId: string) => {
+    setActiveReplyTarget(prev => prev === targetId ? null : targetId);
+  }, []);
 
   if (status === "idle" || status === "loading") {
     return (
@@ -211,14 +216,10 @@ export function ThreadPage() {
         viewerRole={viewerRole}
         isAuthenticated={isAuthenticated}
         isReplyActive={activeReplyTarget === root.assertionId}
-        onReplyToggle={() =>
-          setActiveReplyTarget(
-            activeReplyTarget === root.assertionId ? null : root.assertionId
-          )
-        }
+        onReplyToggle={handleReplyToggle}
         replyComposer={activeReplyTarget === root.assertionId ? replyComposer : null}
-        onEdit={() => handleEdit(root.assertionId)}
-        onDelete={() => handleDelete(root.assertionId)}
+        onEdit={handleEdit}
+        onDelete={handleDelete}
       />
 
       {/* Responses Section */}
@@ -240,18 +241,12 @@ export function ThreadPage() {
                 viewerRole={viewerRole}
                 isAuthenticated={isAuthenticated}
                 isReplyActive={activeReplyTarget === response.assertionId}
-                onReplyToggle={() =>
-                  setActiveReplyTarget(
-                    activeReplyTarget === response.assertionId
-                      ? null
-                      : response.assertionId
-                  )
-                }
+                onReplyToggle={handleReplyToggle}
                 replyComposer={
                   activeReplyTarget === response.assertionId ? replyComposer : null
                 }
-                onEdit={() => handleEdit(response.assertionId)}
-                onDelete={() => handleDelete(response.assertionId)}
+                onEdit={handleEdit}
+                onDelete={handleDelete}
               />
             ))}
           </div>
@@ -299,13 +294,13 @@ interface ThreadItemProps {
   viewerRole: ReturnType<typeof getUserRole>;
   isAuthenticated: boolean;
   isReplyActive: boolean;
-  onReplyToggle: () => void;
+  onReplyToggle: (assertionId: string) => void;
   replyComposer: ReturnType<typeof useReplyComposer> | null;
-  onEdit: () => void;
-  onDelete: () => void;
+  onEdit: (assertionId: string) => void;
+  onDelete: (assertionId: string) => void;
 }
 
-function ThreadItem({
+const ThreadItem = memo(function ThreadItem({
   item,
   isThreadOrigin,
   viewerId,
@@ -391,8 +386,8 @@ function ThreadItem({
             <PostActionMenu
               canEdit={canEditItem}
               canDelete={canDeleteItem}
-              onEdit={onEdit}
-              onDelete={onDelete}
+              onEdit={() => onEdit(item.assertionId)}
+              onDelete={() => onDelete(item.assertionId)}
               editDisabledReason={editDisabledReason}
               deleteDisabledReason={deleteDisabledReason}
             />
@@ -476,7 +471,7 @@ function ThreadItem({
             </Tooltip>
           ) : (
             <button
-              onClick={onReplyToggle}
+              onClick={() => onReplyToggle(item.assertionId)}
               disabled={isPublishing}
               className="text-[#6b7280] hover:text-[#3b82f6] transition-colors p-1 disabled:opacity-50 disabled:cursor-not-allowed focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#3b82f6]/50 rounded"
               aria-label={isReplyActive ? "Cancel reply" : "Reply"}
@@ -504,4 +499,4 @@ function ThreadItem({
       </div>
     </article>
   );
-}
+});

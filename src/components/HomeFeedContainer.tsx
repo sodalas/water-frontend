@@ -1,4 +1,5 @@
 // HomeFeedContainer.tsx
+import { useMemo } from "react";
 import { HomeFeedList } from "./HomeFeedList";
 import { FeedSkeletonList } from "./feed/FeedSkeletonList";
 import { FeedErrorState } from "./feed/FeedErrorState";
@@ -97,10 +98,13 @@ export function HomeFeedContainer(props: HomeFeedContainerProps) {
     return <FeedErrorState onRetry={onRetry} />;
   }
 
+  // Memoize conversion to avoid new array reference on every render
+  const viewItems = useMemo(() => items.map(toFeedItemView), [items]);
+
   // status === "ready"
   return (
     <HomeFeedList
-      items={items.map(toFeedItemView)}
+      items={viewItems}
       viewerId={viewerId}
       viewerRole={viewerRole}
       onItemPress={onItemPress}
