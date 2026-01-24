@@ -9,11 +9,13 @@
 
 import { useEffect, useState } from "react";
 import { useParams, Link, useNavigate } from "@tanstack/react-router";
+import { MessageSquare } from "lucide-react";
 import type { FeedItemView } from "../components/feed/types";
 import { authClient } from "../lib/auth-client";
 import { getUserRole, canEdit, canDelete } from "../domain/permissions/UserRole";
 import { PostActionMenu } from "../components/PostActionMenu";
 import { Tooltip } from "../components/Tooltip";
+import { ReactionBar } from "../components/ReactionBar";
 import { ReplyComposer } from "../components/ReplyComposer";
 import { useReplyComposer } from "../domain/feed/useReplyComposer";
 
@@ -318,26 +320,22 @@ function ThreadItem({
         }
       `}
     >
-      {/* Avatar */}
+      {/* Avatar — same size for all items (no visual privilege) */}
       <div className="shrink-0">
         {item.author.avatarUrl ? (
           <img
             src={item.author.avatarUrl}
             alt={name}
-            className={`rounded-full object-cover ${isThreadOrigin ? "size-11" : "size-10"}`}
+            className="size-10 rounded-full object-cover"
           />
         ) : (
-          <div
-            className={`rounded-full bg-[#2a3142] ${
-              isThreadOrigin ? "size-11" : "size-10"
-            }`}
-          />
+          <div className="size-10 rounded-full bg-[#2a3142]" />
         )}
       </div>
 
       <div className="flex flex-col flex-1 min-w-0">
         <header className="flex items-center gap-1.5 mb-0.5">
-          <span className={`font-semibold text-white truncate ${isThreadOrigin ? "text-[15px]" : "text-[14px]"}`}>
+          <span className="font-semibold text-white text-[15px] truncate">
             {name}
           </span>
           {handle && (
@@ -347,6 +345,11 @@ function ThreadItem({
           <time className="text-[13px] text-[#6b7280] whitespace-nowrap">
             {item.createdAt}
           </time>
+
+          {/* Canon: Optimistic items are visually provisional */}
+          {item.isPending && (
+            <span className="text-xs text-[#6b7280] opacity-60 ml-1">(sending…)</span>
+          )}
 
           {/* Action menu */}
           <div className="ml-auto">
@@ -365,9 +368,7 @@ function ThreadItem({
 
         {/* Text */}
         {item.text && (
-          <p className={`text-[#e5e7eb] leading-relaxed whitespace-pre-wrap ${
-            isThreadOrigin ? "text-[15px] mt-1" : "text-[14px] mt-1"
-          }`}>
+          <p className="text-[#e5e7eb] text-[15px] leading-relaxed whitespace-pre-wrap mt-1">
             {item.text}
           </p>
         )}
@@ -411,6 +412,18 @@ function ThreadItem({
           </div>
         ) : null}
 
+        {/* Phase 12: Thread indicator — backend-authoritative count */}
+        {item.responseCount != null && item.responseCount > 0 && (
+          <Link
+            to="/thread/$assertionId"
+            params={{ assertionId: item.assertionId }}
+            className="mt-3 flex items-center gap-1.5 text-sm text-[#8b949e] hover:text-[#58a6ff] transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#3b82f6]/50 rounded"
+          >
+            <MessageSquare className="size-4" />
+            <span>{item.responseCount} {item.responseCount === 1 ? 'reply' : 'replies'}</span>
+          </Link>
+        )}
+
         {/* Footer actions - icon based */}
         <footer className="mt-3 flex items-center gap-3">
           {/* Reply button with tooltip for disabled state */}
@@ -438,6 +451,13 @@ function ThreadItem({
               </svg>
             </button>
           )}
+
+          {/* Phase 12: Reaction buttons — identical surface for all thread items */}
+          <ReactionBar
+            assertionId={item.assertionId}
+            isAuthenticated={isAuthenticated}
+            initialCounts={item.reactionCounts}
+          />
         </footer>
 
         {/* Reply composer */}
