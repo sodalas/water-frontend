@@ -16,6 +16,7 @@ import { getUserRole, canEdit, canDelete } from "../domain/permissions/UserRole"
 import { PostActionMenu } from "../components/PostActionMenu";
 import { Tooltip } from "../components/Tooltip";
 import { ReactionBar } from "../components/ReactionBar";
+import { BookmarkButton } from "../components/BookmarkButton";
 import { ReplyComposer } from "../components/ReplyComposer";
 import { useReplyComposer } from "../domain/feed/useReplyComposer";
 
@@ -487,6 +488,12 @@ const ThreadItem = memo(function ThreadItem({
             assertionId={item.assertionId}
             isAuthenticated={isAuthenticated}
             initialCounts={item.reactionCounts}
+          />
+
+          {/* Phase 14: Bookmark button — private, no counts */}
+          <BookmarkButton
+            assertionId={item.assertionId}
+            viewerId={viewerId}
           />
         </footer>
 

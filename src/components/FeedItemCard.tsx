@@ -14,6 +14,7 @@ import { ComposerSkeleton } from "./ComposerSkeleton";
 import { PostActionMenu } from "./PostActionMenu";
 import { Tooltip } from "./Tooltip";
 import { ReactionBar } from "./ReactionBar";
+import { BookmarkButton } from "./BookmarkButton";
 import type { UserRole } from "../domain/permissions/UserRole";
 import { canEdit, canDelete } from "../domain/permissions/UserRole";
 
@@ -206,6 +207,12 @@ export function FeedItemCard({
               assertionId={item.assertionId}
               isAuthenticated={isAuthenticated}
               initialCounts={item.reactionCounts}
+            />
+
+            {/* Phase 14: Bookmark button — private, no counts */}
+            <BookmarkButton
+              assertionId={item.assertionId}
+              viewerId={viewerId ?? null}
             />
         </footer>
 
