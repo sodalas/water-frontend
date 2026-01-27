@@ -15,6 +15,7 @@ import { PostActionMenu } from "./PostActionMenu";
 import { Tooltip } from "./Tooltip";
 import { ReactionBar } from "./ReactionBar";
 import { BookmarkButton } from "./BookmarkButton";
+import { FeedLinkPreview } from "./FeedLinkPreview";
 import type { UserRole } from "../domain/permissions/UserRole";
 import { canEdit, canDelete } from "../domain/permissions/UserRole";
 
@@ -136,22 +137,7 @@ export function FeedItemCard({
 
               if (m.type === "link") {
                 return (
-                  <a
-                    key={i}
-                    href={m.src}
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    className="block p-3 rounded-lg bg-[#242938] border border-[#2a3142] hover:bg-[#2a3142] transition-colors"
-                  >
-                    <div className="text-sm font-medium text-white truncate">
-                      {m.title ?? m.domain ?? m.src}
-                    </div>
-                    {m.domain && (
-                      <div className="text-xs text-[#6b7280] mt-0.5">
-                        {m.domain}
-                      </div>
-                    )}
-                  </a>
+                  <FeedLinkPreview key={m.id || i} url={m.src} />
                 );
               }
 
