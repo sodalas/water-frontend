@@ -6,14 +6,41 @@ interface ComposerSkeletonProps {
   composer: Composer;
   autoFocus?: boolean;
   avatarUrl?: string | null;
+  isRevising?: boolean;
+  onCancelRevision?: () => void;
 }
 
-export function ComposerSkeleton({ composer, autoFocus, avatarUrl }: ComposerSkeletonProps) {
+export function ComposerSkeleton({ composer, autoFocus, avatarUrl, isRevising, onCancelRevision }: ComposerSkeletonProps) {
   const isPublishing = composer.status === "publishing";
   const canPost = composer.draft.text.trim() || composer.draft.media.length > 0;
 
+  // Handle cancel revision with draft clear
+  const handleCancelRevision = async () => {
+    await composer.clear();
+    onCancelRevision?.();
+  };
+
   return (
-    <div className="bg-[#1a1f2e] border border-[#2a3142] rounded-xl p-4">
+    <div className={`bg-[#1a1f2e] border rounded-xl p-4 ${isRevising ? 'border-amber-500/50' : 'border-[#2a3142]'}`}>
+      {/* Revision mode banner */}
+      {isRevising && (
+        <div className="flex items-center justify-between mb-3 pb-3 border-b border-[#2a3142]">
+          <span className="text-amber-400 text-sm font-medium flex items-center gap-2">
+            <svg className="size-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+              <path strokeLinecap="round" strokeLinejoin="round" d="M16.862 4.487l1.687-1.688a1.875 1.875 0 112.652 2.652L10.582 16.07a4.5 4.5 0 01-1.897 1.13L6 18l.8-2.685a4.5 4.5 0 011.13-1.897l8.932-8.931zm0 0L19.5 7.125M18 14v4.75A2.25 2.25 0 0115.75 21H5.25A2.25 2.25 0 013 18.75V8.25A2.25 2.25 0 015.25 6H10" />
+            </svg>
+            Editing post
+          </span>
+          <button
+            type="button"
+            onClick={handleCancelRevision}
+            disabled={isPublishing}
+            className="text-[#6b7280] hover:text-[#9ca3af] text-sm transition-colors disabled:opacity-50"
+          >
+            Cancel
+          </button>
+        </div>
+      )}
       <div className="flex gap-3">
         {/* Avatar */}
         <div className="shrink-0">
@@ -80,7 +107,20 @@ export function ComposerSkeleton({ composer, autoFocus, avatarUrl }: ComposerSke
 
           {/* Status messages */}
           {composer.status === "error" && (
-            <p className="text-red-400 text-sm mt-2">{composer.error || "Error publishing"}</p>
+            <div className="flex items-start gap-2 mt-2 p-2 bg-red-500/10 border border-red-500/20 rounded-lg">
+              <svg className="size-4 text-red-400 shrink-0 mt-0.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                <path strokeLinecap="round" strokeLinejoin="round" d="M12 9v3.75m9-.75a9 9 0 11-18 0 9 9 0 0118 0zm-9 3.75h.008v.008H12v-.008z" />
+              </svg>
+              <p className="text-red-400 text-sm flex-1">{composer.error || "Error publishing"}</p>
+              <button
+                type="button"
+                onClick={() => composer.clear()}
+                className="text-red-400/60 hover:text-red-400 text-xs shrink-0"
+                aria-label="Dismiss error"
+              >
+                Dismiss
+              </button>
+            </div>
           )}
           {composer.status === "success" && (
             <p className="text-green-400 text-sm mt-2">Posted!</p>

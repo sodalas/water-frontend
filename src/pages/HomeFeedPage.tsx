@@ -80,10 +80,12 @@ export function HomeFeedPage() {
         } catch (error: any) {
           // Phase C: Handle 409 Conflict for revisions
           if (error.status === 409 || (error.message && error.message.includes("already been revised"))) {
-            notifyConflict("This post has already been edited or deleted.");
+            // Clear the stale draft - it can never be published
+            await mainComposer.clear();
             setRevisingId(null); // Clear revision state
+            notifyConflict("This post has already been edited. Your changes could not be saved.");
             refresh(); // Refresh to show current state
-            throw error;
+            return null; // Don't re-throw - we've handled it gracefully
           }
           throw error;
         }
@@ -216,6 +218,8 @@ export function HomeFeedPage() {
         <ComposerSkeleton
           composer={wrappedMainComposer}
           avatarUrl={session?.user?.image}
+          isRevising={!!revisingId}
+          onCancelRevision={() => setRevisingId(null)}
         />
       </div>
 

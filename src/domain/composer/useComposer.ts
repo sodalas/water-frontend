@@ -321,7 +321,12 @@ export function useComposer(viewerId: string) {
         });
 
         if (!response.ok) {
-          throw new Error(`Publish failed: ${response.status}`);
+          // Parse error response to get actual message from backend
+          const errorData = await response.json().catch(() => ({}));
+          const error = new Error(errorData.error || `Publish failed: ${response.status}`);
+          // Attach status for conflict detection in callers
+          (error as any).status = response.status;
+          throw error;
         }
 
         const { assertionId, createdAt } = await response.json();
